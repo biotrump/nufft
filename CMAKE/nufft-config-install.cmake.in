@@ -9,7 +9,6 @@ endif()
 unset(_NUFFT_TARGET)
 
 # Report the blas and nufft raw or imported libraries.
-set(NUFFT_blas_LIBRARIES "@BLAS_LIBRARIES@")
 set(NUFFT_nufft_LIBRARIES "@NUFFT_LIBRARIES@")
 
 unset(_NUFFT_SELF_DIR)
