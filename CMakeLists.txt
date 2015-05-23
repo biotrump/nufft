@@ -44,6 +44,8 @@ else(ANDROID_NDK)
 	# This library is not present in the Sun package SolarisStudio12.3-linux-x86-bin
 	STRING(REPLACE \;mtsk\; \; CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES "${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}")
 	endif ()
+	message ("*** Fortran compiler RELEASE FLAGS: " ${CMAKE_Fortran_FLAGS_RELEASE})
+	message ("*** Fortran compiler DEBUG FLAGS: " ${CMAKE_Fortran_FLAGS_DEBUG})
 endif(ANDROID_NDK)
 
 # Get Python

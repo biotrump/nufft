@@ -64,9 +64,6 @@ set(ZNUFFTF90 next235.f dirft1d.f dirft2d.f dirft3d.f
 set(ZNUFFTF77 next235.f dirft1d.f dirft2d.f dirft3d.f
 	nufft1df77.f nufft2df77.f nufft3df77.f)
 
-#set(CB1AUX  isamax.f sasum.f saxpy.f scopy.f snrm2.f sscal.f)
-#set(ZB1AUX idamax.f dasum.f daxpy.f dcopy.f dnrm2.f dscal.f)
-
 #---------------------------------------------------------------------
 #  The following line defines auxiliary routines needed by both the
 #  Level 2 and Level 3 BLAS.  Comment it out only if you already have
@@ -119,8 +116,6 @@ nufft_install_library(nufft)
 
 
 ############################
-#option(BUILD_TESTING "Build BLAS" ON)
-
 if(BUILD_TESTING)
 add_subdirectory(TESTING)
 endif(BUILD_TESTING)
