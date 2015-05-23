@@ -1,0 +1,15 @@
+# Compute locations from <prefix>/lib/cmake/nufft-<v>/<self>.cmake
+get_filename_component(_NUFFT_SELF_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+# Load nufft targets from the install tree if necessary.
+set(_NUFFT_TARGET "@_nufft_config_install_guard_target@")
+if(_NUFFT_TARGET AND NOT TARGET "${_NUFFT_TARGET}")
+  include("${_NUFFT_SELF_DIR}/nufft-targets.cmake")
+endif()
+unset(_NUFFT_TARGET)
+
+# Report the blas and nufft raw or imported libraries.
+set(NUFFT_blas_LIBRARIES "@BLAS_LIBRARIES@")
+set(NUFFT_nufft_LIBRARIES "@NUFFT_LIBRARIES@")
+
+unset(_NUFFT_SELF_DIR)

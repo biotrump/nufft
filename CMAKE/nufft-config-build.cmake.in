@@ -1,0 +1,10 @@
+# Load nufft targets from the build tree if necessary.
+set(_NUFFT_TARGET "@_nufft_config_build_guard_target@")
+if(_NUFFT_TARGET AND NOT TARGET "${_NUFFT_TARGET}")
+  include("@NUFFT_BINARY_DIR@/nufft-targets.cmake")
+endif()
+unset(_NUFFT_TARGET)
+
+# Report the blas and nufft raw or imported libraries.
+set(NUFFT_blas_LIBRARIES "@BLAS_LIBRARIES@")
+set(NUFFT_nufft_LIBRARIES "@NUFFT_LIBRARIES@")
