@@ -1,4 +1,5 @@
 #!/bin/bash
+if [ $TARGET_ARCH == "all" ]; then
 ./build_NDK_cmake.sh -abi armeabi -c
 ret1=$?
 #echo "ret1=$ret1"
@@ -37,6 +38,15 @@ if [ "$ret1" != "0" -o \
 	"$ret7" != "0" ]; then
 #		echo "11111"
 		exit -1
+fi
+else
+	./build_NDK_cmake.sh -abi $TARGET_ARCH -c
+	ret1=$?
+	#echo "ret1=$ret1"
+	#read
+	if [ "$ret1" != "0" ]; then
+		exit -1
+	fi
 fi
 #echo "00000"
 exit 0
