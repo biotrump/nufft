@@ -71,23 +71,23 @@ export APP_ABI
 
 if [[ ${NDK_ROOT} =~ .*"-r9".* ]]
 then
-#ANDROID_APIVER=android-8
-#ANDROID_APIVER=android-9
-#android 4.0.1 ICS and above
-ANDROID_APIVER=android-14
-#TOOL_VER="4.6"
-#gfortran is in r9d V4.8.0
-TOOL_VER="4.8.0"
-else
-#r10d : android 4.0.1 ICS and above
-if [ "$APP_ABI" = "arm64-v8a" -o \
-	"$APP_ABI" = "x86_64" -o \
-	"$APP_ABI" = "mips64" ]; then
-	ANDROID_APIVER=android-21
-else
+	#ANDROID_APIVER=android-8
+	#ANDROID_APIVER=android-9
+	#android 4.0.1 ICS and above
 	ANDROID_APIVER=android-14
-fi
-TOOL_VER="4.9"
+	#TOOL_VER="4.6"
+	#gfortran is in r9d V4.8.0
+	TOOL_VER="4.8.0"
+else
+	#r10d : android 4.0.1 ICS and above
+	if [ "$APP_ABI" = "arm64-v8a" -o \
+		"$APP_ABI" = "x86_64" -o \
+		"$APP_ABI" = "mips64" ]; then
+		ANDROID_APIVER=android-21
+	else
+		ANDROID_APIVER=android-14
+	fi
+	TOOL_VER="4.9"
 fi
 #echo ANDROID_APIVER=$ANDROID_APIVER
 #read
@@ -127,7 +127,7 @@ case $APP_ABI in
 	export  CCAS="${TARGPLAT}-as"
 	export  CCASFLAGS="--32 -march=i686+sse3"
 	NUFFT_LIB_NAME=nufft
-	echo "$APP_ABI is not supported in dsplib yet!!!"
+	echo "$APP_ABI is not supported in nufft yet!!!"
   ;;
   x86_64)
     TARGPLAT=x86_64-linux-android
@@ -147,7 +147,7 @@ case $APP_ABI in
 	TOOLCHAINS=mipsel-linux-android
 	ARCH=mips
 	NUFFT_LIB_NAME=nufft
-	echo "$APP_ABI is not supported in dsplib yet!!!"
+	echo "$APP_ABI is not supported in nufft yet!!!"
   ;;
   mips64)
 	## probably wrong
