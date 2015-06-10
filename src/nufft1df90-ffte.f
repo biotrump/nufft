@@ -24,7 +24,7 @@ c  Different applications have different needs, and we have chosen
 c  to provide the simplest code as a reasonable efficient template.
 c
 c**********************************************************************
-      subroutine nufft1d1f90(nj,xj,cj,iflag,eps,ms,fk,ier)
+      subroutine nufft1d1f90_ffte(nj,xj,cj,iflag,eps,ms,fk,ier)
       implicit none
       integer ier,iflag,istart,iw1,iwtot,iwsav
       integer j,jb1,jb1u,jb1d,k1,ms,next235,nf1,nj,nspread
@@ -33,6 +33,7 @@ c**********************************************************************
       parameter (pi=3.141592653589793238462643383279502884197d0)
       complex*16 cj(nj),fk(-ms/2:(ms-1)/2),zz,ccj
 c ----------------------------------------------------------------------
+C variable size 1-D real*8 arrary: fw[]
       real*8, allocatable :: fw(:)
 c ----------------------------------------------------------------------
 c     if (iflag .ge. 0) then
@@ -176,6 +177,7 @@ c     -----------------------------------
       iw1 = 2*nf1
       iwsav = iw1+nspread+1
       iwtot = iwsav+4*nf1+15
+C allocate size "0 to iwtot", 1-D real*8 arrary: fw[0:iwtot]
       allocate ( fw(0:iwtot) )
 c
 c     ---------------------------------------------------------------
@@ -186,9 +188,15 @@ c     ---------------------------------------------------------------
       do k1 = 1, nspread
          fw(iw1+k1) = exp(-t1*k1**2)
       enddo
-      call dcffti(nf1,fw(iwsav))
-	WRITE(6,*) "dcffti",nf1,iwsav
+
+C Thomas init : CALL ZFFT1D(fw(0), nf1, 0, fw(iwsav))
+C Thomas dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, 1, fw(iwsav))
+C Thomas dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -1, fw(iwsav))
+C      call dcffti(nf1,fw(iwsav))
+	CALL		ZFFT1D(fw(0), nf1, 0, fw(iwsav))
+	WRITE(6,*) "ZFFT1D 0",nf1,iwsav
 	CALL		DUMP(fw(iwsav), nf1)
+
 c
 c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
@@ -261,13 +269,20 @@ c     There is a factor of (-1)**k1 needed to account for the
 c     FFT phase shift.
 c     ---------------------------------------------------------------
 c
+
+C Thomas init : CALL ZFFT1D(fw(0), nf1, 0, fw(iwsav))
+C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, 1, fw(iwsav))
+C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -1, fw(iwsav))
+
       if (iflag .ge. 0) then
-         call dcfftb(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) "dcfftb",nf1,iwsav
+C         call dcfftb(nf1,fw(0),fw(iwsav))
+		CALL		ZFFT1D(fw(0), nf1, 1, fw(iwsav))
+		WRITE(6,*) "ZFFT1D 1",nf1,iwsav
 		CALL		DUMP(fw(0), nf1)
       else
-         call dcfftf(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) "dcfftf",nf1,iwsav
+C         call dcfftf(nf1,fw(0),fw(iwsav))
+		CALL		ZFFT1D(fw(0), nf1, -1, fw(iwsav))
+		WRITE(6,*) "ZFFT1D -1",nf1,iwsav
 		CALL		DUMP(fw(0), nf1)
       endif
 c
@@ -297,7 +312,7 @@ c
 c
 c
 ************************************************************************
-      subroutine nufft1d2f90(nj,xj,cj, iflag,eps, ms,fk,ier)
+      subroutine nufft1d2f90_ffte(nj,xj,cj, iflag,eps, ms,fk,ier)
       implicit none
       integer ier,iflag,iw1,iwsav,iwtot,j,jb1,jb1u,jb1d,k1
       integer ms,next235,nf1,nj,nspread,nw
@@ -348,7 +363,7 @@ c     2) compute inverse FFT on uniform fine grid
 c     3) spread data to regular mesh using Gaussian
 c
 c
-c     See subroutine nufft1d1f90(nj,xj,cj,iflag,eps,ms,fk,ier)
+c     See subroutine nufft1d1f90_ffte(nj,xj,cj,iflag,eps,ms,fk,ier)
 c     for more comments on fast gridding and parameter selection.
 c
 ************************************************************************
@@ -400,9 +415,16 @@ c     ---------------------------------------------------------------
       do k1 = 1, nspread
          fw(iw1+k1) = exp(-t1*k1**2)
       enddo
-      call dcffti(nf1,fw(iwsav))
-	WRITE(6,*) ">dcffti",nf1,iwsav
-	CALL		DUMP(fw(iwsav), nf1)
+
+C Thomas init : CALL ZFFT1D(fw(0), nf1, 0, fw(iwsav))
+C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, 1, fw(iwsav))
+C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -1, fw(iwsav))
+
+C      call dcffti(nf1,fw(iwsav))
+	CALL ZFFT1D(fw(0), nf1, 0, fw(iwsav))
+	WRITE(6,*) ">ZFFT1D 0",nf1,iwsav
+	CALL		DUMP(fw(0), nf1)
+
 c
 c     ---------------------------------------------------------------
 c     Deconvolve and compute inverse 1D FFT
@@ -435,15 +457,23 @@ c
          fw(2*k1+1) = dcmplx(0d0, 0d0)
       enddo
 c
+
+C Thomas init : CALL ZFFT1D(fw(0), nf1, 0, fw(iwsav))
+C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, 1, fw(iwsav))
+C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -1, fw(iwsav))
+
       if (iflag .ge. 0) then
-         call dcfftb(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) ">dcfftb",nf1,iwsav
+C         call dcfftb(nf1,fw(0),fw(iwsav))
+		CALL ZFFT1D(fw(0), nf1, 1, fw(iwsav))
+		WRITE(6,*) ">ZFFT1D 1",nf1,iwsav
 		CALL		DUMP(fw(0), nf1)
       else
-         call dcfftf(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) ">dcfftf",nf1,iwsav
+C         call dcfftf(nf1,fw(0),fw(iwsav))
+		CALL ZFFT1D(fw(0), nf1, -1, fw(iwsav))
+		WRITE(6,*) ">ZFFT1D -1",nf1,iwsav
 		CALL		DUMP(fw(0), nf1)
       endif
+
 c
 c     ---------------------------------------------------------------
 c     Loop over target points (1,...,nj)
@@ -498,7 +528,7 @@ c
 c
 c
 ************************************************************************
-      subroutine nufft1d3f90(nj,xj,cj, iflag,eps, nk,sk,fk,ier)
+      subroutine nufft1d3f90_ffte(nj,xj,cj, iflag,eps, nk,sk,fk,ier)
       implicit none
       integer ier,iw1,iwsave,iwtot,j,jb1,k1,kb1,kmax,nj,iflag,nk
       integer next235,nf1,nspread
@@ -642,9 +672,15 @@ c
          fw(iw1+k1) = exp(-t1*k1**2)
       enddo
 c
-      call dcffti(nf1,fw(iwsave))
-		WRITE(6,*) ">>dcffti",nf1,iwsave
-		CALL		DUMP(fw(iwsave), nf1)
+
+C Thomas init : CALL ZFFT1D(fw(0), nf1, 0, fw(iwsav))
+C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, 1, fw(iwsav))
+C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -1, fw(iwsav))
+
+C      call dcffti(nf1,fw(iwsave))
+		CALL ZFFT1D(fw(0), nf1, 0, fw(iwsave))
+		WRITE(6,*) ">>ZFFT1D 0",nf1,iwsave
+		CALL		DUMP(fw(0), nf1)
 c
 c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
@@ -713,13 +749,20 @@ c
          fw(nf1+2*k1+1) = dimag(zz)
       enddo
 c
+
+C Thomas init : CALL ZFFT1D(fw(0), nf1, 0, fw(iwsav))
+C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, 1, fw(iwsav))
+C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -1, fw(iwsav))
+
       if (iflag .ge. 0) then
-         call dcfftb(nf1,fw(0),fw(iwsave))
-		WRITE(6,*) ">>dcfftb",nf1,iwsave
+C         call dcfftb(nf1,fw(0),fw(iwsave))
+		CALL ZFFT1D(fw(0), nf1, 1, fw(iwsave))
+		WRITE(6,*) ">>ZFFT1D 1",nf1,iwsave
 		CALL		DUMP(fw(0), nf1)
       else
-         call dcfftf(nf1,fw(0),fw(iwsave))
-		WRITE(6,*) ">>dcfftf",nf1,iwsave
+C         call dcfftf(nf1,fw(0),fw(iwsave))
+		CALL ZFFT1D(fw(0), nf1, -1, fw(iwsave))
+		WRITE(6,*) ">>ZFFT1D -1",nf1,iwsave
 		CALL		DUMP(fw(0), nf1)
       endif
       do k1 = 1, kmax+nspread, 2

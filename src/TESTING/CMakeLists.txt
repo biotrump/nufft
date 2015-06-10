@@ -117,3 +117,9 @@ else(NUFFT_F90)
   add_nufft_test(nufft3d_demof77 nufft3d_demof77.f)
 endif(NUFFT_F90)
 endif()
+
+#add_nufft_test(nufft1d_demof90-ffte nufft1d_demof90.f)
+add_executable(nufft1d_demof90-ffte nufft1d_demof90-ffte.f)
+target_link_libraries(nufft1d_demof90-ffte
+	nufft
+	${FFTELIB} )

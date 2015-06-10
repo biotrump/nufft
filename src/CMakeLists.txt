@@ -57,6 +57,8 @@
 #set(DBLAS1 idamax.f dasum.f daxpy.f dcopy.f ddot.f dnrm2.f
 #	drot.f drotg.f dscal.f dsdot.f dswap.f drotmg.f drotm.f)
 #nufft*d_demof90.f nufft*df90.f dirft*d.f dfftpack.f next235.f
+set(ZNUFFTF90-FFTE nufft1df90-ffte.f )
+
 set(ZNUFFTF90 next235.f dirft1d.f dirft2d.f dirft3d.f
 	nufft1df90.f nufft2df90.f nufft3df90.f)
 
@@ -72,6 +74,7 @@ set(ZNUFFTF77 next235.f dirft1d.f dirft2d.f dirft3d.f
 #set(ALLBLAS  lsame.f xerbla.f xerbla_array.f)
 
 # default build all of it
+set(ALLOBJF90-FFTE ${ZNUFFTF90-FFTE})
 set(ALLOBJF90 ${ZNUFFTF90})
 set(ALLOBJF77 ${ZNUFFTF77})
 
@@ -98,7 +101,8 @@ if(NUFFT_COMPLEX16)
 endif()
 
 if(NUFFT_F90)
-add_library(nufft ${ALLOBJF90})
+#add_library(nufft ${ALLOBJF90-FFTE})
+add_library(nufft ${ALLOBJF90} ${ALLOBJF90-FFTE})
 else()
 add_library(nufft ${ALLOBJF77})
 endif()

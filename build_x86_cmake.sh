@@ -97,7 +97,11 @@ fi
 
 pushd ${NUFFT_OUT}/$TARGET_ARCH
 
-cmake ${NUFFT_DIR}
+export FFTE_LIB_NAME=ffte_vec
+cmake -DFFTE_DIR:FILEPATH=${FFTE_DIR} -DFFTE_LIB_NAME=${FFTE_LIB_NAME} \
+	-DFFTE_OUT:FILEPATH=${FFTE_OUT}/libs/$APP_ABI \
+	${NUFFT_DIR}
+
 ret=$?
 echo "ret=$ret"
 if [ "$ret" != '0' ]; then

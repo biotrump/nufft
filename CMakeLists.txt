@@ -23,8 +23,12 @@ if(ANDROID_NDK)
 	if (Fortran_COMPILER_NAME MATCHES "gfortran.*")
 	# gfortran
 	message ("*** Fortran compiler: " ${Fortran_COMPILER_NAME})
-	set (CMAKE_Fortran_FLAGS_RELEASE "-funroll-all-loops -fPIE -pie -fPIC -fno-f2c -O3")
-	set (CMAKE_Fortran_FLAGS_DEBUG   "-fno-f2c -O0 -fPIE -pie -fPIC -g")
+#KitKat4.4.x and Lollip 5.x :executable
+#	set (CMAKE_Fortran_FLAGS_RELEASE "-funroll-all-loops -fPIE -pie -fPIC -fno-f2c -O3")
+#	set (CMAKE_Fortran_FLAGS_DEBUG   "-fno-f2c -O0 -fPIE -pie -fPIC -g")
+#ICS4.0.x :executable
+	set (CMAKE_Fortran_FLAGS_RELEASE "-funroll-all-loops -fPIC -fno-f2c -O3")
+	set (CMAKE_Fortran_FLAGS_DEBUG   "-fno-f2c -O0 -fPIC -g")
 	else (Fortran_COMPILER_NAME MATCHES "gfortran.*")
 	message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
 	message ("Fortran compiler: " ${Fortran_COMPILER_NAME})
@@ -93,18 +97,53 @@ CheckNUFFTCompilerFlags()
 # --------------------------------------------------
 # Precision to build
 # By default all precisions are generated
-
+if(ANDROID_NDK)
+	set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER )
+	set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER )
+	set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER )
+endif(ANDROID_NDK)
 # --------------------------------------------------
 # Subdirectories that need to be processed
 
 # --------------------------------------------------
 # FFTE
-option(FFTE "Build FFTE" OFF)
+#option(FFTE "Build FFTE" OFF)
 
-if(FFTE)
-  add_subdirectory(ffte)
-endif(FFTE)
+#if(FFTE)
+#  add_subdirectory(ffte)
+#endif(FFTE)
 
+# --------------------------------------------------
+#find ffte
+message("FFTE_DIR=${FFTE_DIR}")
+find_path(FFTE_INC ffte.h
+			HINTS ${FFTE_DIR}/include )
+message("FFTE_INC=${FFTE_INC}" )
+if(FFTE_INC)
+	include_directories("${FFTE_INC}")
+endif(FFTE_INC)
+
+message("FFTE_OUT=${FFTE_OUT} ")
+if(ANDROID_NDK)
+find_library (FFTELIB
+			NAMES ${FFTE_LIB_NAME}
+			PATHS ${FFTE_OUT}
+			PATH_SUFFIXES lib
+			NO_DEFAULT_PATH)
+else()
+find_library (FFTELIB
+			NAMES ${FFTE_LIB_NAME}
+			PATHS ${FFTE_OUT}
+			PATH_SUFFIXES lib
+			NO_DEFAULT_PATH)
+endif()
+message("**FFTELIB=${FFTELIB} ")
+# --------------------------------------------------
+if(ANDROID_NDK)
+	set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY )
+	set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
+	set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
+endif(ANDROID_NDK)
 # NUFFT
 option(USE_OPTIMIZED_FFT "Whether or not to use an optimized fft library instead of included netlib fftpack" OFF)
 

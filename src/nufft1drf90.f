@@ -28,12 +28,12 @@ c**********************************************************************
       implicit none
       integer ier,iflag,istart,iw1,iwtot,iwsav
       integer j,jb1,jb1u,jb1d,k1,ms,next235,nf1,nj,nspread
-      real*8 cross,cross1,diff1,eps,hx,pi,rat,r2lamb,t1,tau
-      real*8 xc(-147:147),xj(nj)
+      real*4 cross,cross1,diff1,eps,hx,pi,rat,r2lamb,t1,tau
+      real*4 xc(-147:147),xj(nj)
       parameter (pi=3.141592653589793238462643383279502884197d0)
-      complex*16 cj(nj),fk(-ms/2:(ms-1)/2),zz,ccj
+      complex*8 cj(nj),fk(-ms/2:(ms-1)/2),zz,ccj
 c ----------------------------------------------------------------------
-      real*8, allocatable :: fw(:)
+      real*4, allocatable :: fw(:)
 c ----------------------------------------------------------------------
 c     if (iflag .ge. 0) then
 c
@@ -186,15 +186,16 @@ c     ---------------------------------------------------------------
       do k1 = 1, nspread
          fw(iw1+k1) = exp(-t1*k1**2)
       enddo
+
+C Thomas init : CALL ZFFT1F(A,nf1,0,fw(iwsav))
+
       call dcffti(nf1,fw(iwsav))
-	WRITE(6,*) "dcffti",nf1,iwsav
-	CALL		DUMP(fw(iwsav), nf1)
 c
 c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
 c     ---------------------------------------------------------------
       do k1 = 0, 2*nf1-1
-         fw(k1) = dcmplx(0d0,0d0)
+         fw(k1) = cmplx(0d0,0d0)
       enddo
 c
 c     ---------------------------------------------------------------
@@ -211,7 +212,7 @@ c
 c    ---------------------------------------------------------------
 c
       do j = 1, nj
-         ccj = cj(j)/dble(nj)
+         ccj = cj(j)/real(nj)
 
          jb1 = int((xj(j)+pi)/hx)
          diff1 = (xj(j)+pi)/hx - jb1
@@ -237,20 +238,20 @@ c
          do k1 = -nspread+1, -jb1d-1
 	    istart = 2*(jb1+k1+nf1)
             zz=xc(k1)*ccj
-            fw(istart)=fw(istart)+dreal(zz)
-            fw(istart+1)=fw(istart+1)+dimag(zz)
+            fw(istart)=fw(istart)+real(zz)
+            fw(istart+1)=fw(istart+1)+imag(zz)
          enddo
          do k1 = -jb1d, jb1u
 	    istart = 2*(jb1+k1)
             zz=xc(k1)*ccj
-            fw(istart)=fw(istart)+dreal(zz)
-            fw(istart+1)=fw(istart+1)+dimag(zz)
+            fw(istart)=fw(istart)+real(zz)
+            fw(istart+1)=fw(istart+1)+imag(zz)
          enddo
          do k1 = jb1u+1, nspread
 	    istart = 2*(jb1+k1-nf1)
             zz=xc(k1)*ccj
-            fw(istart)=fw(istart)+dreal(zz)
-            fw(istart+1)=fw(istart+1)+dimag(zz)
+            fw(istart)=fw(istart)+real(zz)
+            fw(istart+1)=fw(istart+1)+imag(zz)
          enddo
       enddo
 c
@@ -261,31 +262,32 @@ c     There is a factor of (-1)**k1 needed to account for the
 c     FFT phase shift.
 c     ---------------------------------------------------------------
 c
+
+c Thomas, dcfftb, dcfftf : backward, forward FFT , double precision
+C Thomas dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0),nf1,1,fw(iwsav))
+C Thomas dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0),nf1,-1,fw(iwsav))
+
       if (iflag .ge. 0) then
          call dcfftb(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) "dcfftb",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
       else
          call dcfftf(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) "dcfftf",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
       endif
 c
-      tau = pi * r2lamb / dble(nf1)**2
+      tau = pi * r2lamb / real(nf1)**2
       cross1 = 1d0/sqrt(r2lamb)
-      zz = dcmplx(fw(0),fw(1))
+      zz = cmplx(fw(0),fw(1))
       fk(0) = cross1*zz
       do k1 = 1, (ms-1)/2
          cross1 = -cross1
-         cross = cross1*exp(tau*dble(k1)**2)
-	 zz = dcmplx(fw(2*k1),fw(2*k1+1))
+         cross = cross1*exp(tau*real(k1)**2)
+	 zz = cmplx(fw(2*k1),fw(2*k1+1))
          fk(k1) = cross*zz
-	 zz = dcmplx(fw(2*(nf1-k1)),fw(2*(nf1-k1)+1))
+	 zz = cmplx(fw(2*(nf1-k1)),fw(2*(nf1-k1)+1))
          fk(-k1) = cross*zz
       enddo
       if (ms/2*2.eq.ms) then
-         cross = -cross1*exp(tau*dble(ms/2)**2)
-         zz = dcmplx(fw(2*nf1-ms),fw(2*nf1-ms+1))
+         cross = -cross1*exp(tau*real(ms/2)**2)
+         zz = cmplx(fw(2*nf1-ms),fw(2*nf1-ms+1))
          fk(-ms/2) = cross*zz
       endif
       deallocate(fw)
@@ -301,13 +303,13 @@ c
       implicit none
       integer ier,iflag,iw1,iwsav,iwtot,j,jb1,jb1u,jb1d,k1
       integer ms,next235,nf1,nj,nspread,nw
-      real*8 cross,cross1,diff1,eps,hx,pi,rat,r2lamb,t1
-      real*8 xj(nj),xc(-147:147)
+      real*4 cross,cross1,diff1,eps,hx,pi,rat,r2lamb,t1
+      real*4 xj(nj),xc(-147:147)
       parameter (pi=3.141592653589793238462643383279502884197d0)
-      complex*16 cj(nj), fk(-ms/2:(ms-1)/2)
-      complex*16 zz
+      complex*8 cj(nj), fk(-ms/2:(ms-1)/2)
+      complex*8 zz
 c ----------------------------------------------------------------------
-      real*8, allocatable :: fw(:)
+      real*4, allocatable :: fw(:)
 c ----------------------------------------------------------------------
 c     if (iflag .ge. 0) then
 c
@@ -400,49 +402,51 @@ c     ---------------------------------------------------------------
       do k1 = 1, nspread
          fw(iw1+k1) = exp(-t1*k1**2)
       enddo
+
+c Thomas, dcffti: initialize
+
       call dcffti(nf1,fw(iwsav))
-	WRITE(6,*) ">dcffti",nf1,iwsav
-	CALL		DUMP(fw(iwsav), nf1)
 c
 c     ---------------------------------------------------------------
 c     Deconvolve and compute inverse 1D FFT
 c     (A factor of (-1)**k is needed to shift phase.)
 c     ---------------------------------------------------------------
 c
-      t1 = pi * r2lamb / dble(nf1)**2
+      t1 = pi * r2lamb / real(nf1)**2
       cross1 = 1d0/sqrt(r2lamb)
       zz = cross1*fk(0)
-      fw(0) = dreal(zz)
-      fw(1) = dimag(zz)
+      fw(0) = real(zz)
+      fw(1) = imag(zz)
       do k1 = 1, (ms-1)/2
          cross1 = -cross1
-         cross = cross1*exp(t1*dble(k1)**2)
+         cross = cross1*exp(t1*real(k1)**2)
          zz = cross*fk(k1)
-         fw(2*k1) = dreal(zz)
-         fw(2*k1+1) = dimag(zz)
+         fw(2*k1) = real(zz)
+         fw(2*k1+1) = imag(zz)
          zz = cross*fk(-k1)
-         fw(2*(nf1-k1)) = dreal(zz)
-         fw(2*(nf1-k1)+1) = dimag(zz)
+         fw(2*(nf1-k1)) = real(zz)
+         fw(2*(nf1-k1)+1) = imag(zz)
       enddo
-      cross = -cross1*exp(t1*dble(ms/2)**2)
+      cross = -cross1*exp(t1*real(ms/2)**2)
       if (ms/2*2.eq.ms) then
 	 zz = cross*fk(-ms/2)
-         fw(2*nf1-ms) = dreal(zz)
-         fw(2*nf1-ms+1) = dimag(zz)
+         fw(2*nf1-ms) = real(zz)
+         fw(2*nf1-ms+1) = imag(zz)
       endif
       do k1 = (ms+1)/2, nf1-ms/2-1
-         fw(2*k1) = dcmplx(0d0, 0d0)
-         fw(2*k1+1) = dcmplx(0d0, 0d0)
+         fw(2*k1) = cmplx(0d0, 0d0)
+         fw(2*k1+1) = cmplx(0d0, 0d0)
       enddo
 c
+
+c Thomas: dcfftf. fcfftb : backward, forward FFT , double precision
+C Thomas dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0),nf1,1,fw(iwsav))
+C Thomas dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0),nf1,-1,fw(iwsav))
+
       if (iflag .ge. 0) then
          call dcfftb(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) ">dcfftb",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
       else
          call dcfftf(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) ">dcfftf",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
       endif
 c
 c     ---------------------------------------------------------------
@@ -454,7 +458,7 @@ c          locations using Gaussian convolution.
 c     ---------------------------------------------------------------
       t1 = pi/r2lamb
       do j = 1, nj
-         cj(j) = dcmplx(0d0,0d0)
+         cj(j) = cmplx(0d0,0d0)
          jb1 = int((xj(j)+pi)/hx)
          diff1 = (xj(j)+pi)/hx - jb1
          jb1 = mod(jb1, nf1)
@@ -476,15 +480,15 @@ c
          jb1d = min(nspread-1, jb1)
          jb1u = min(nspread, nf1-jb1-1)
          do k1 = -nspread+1, -jb1d-1
-	    zz = dcmplx(fw(2*(jb1+k1+nf1)),fw(2*(jb1+k1+nf1)+1))
+	    zz = cmplx(fw(2*(jb1+k1+nf1)),fw(2*(jb1+k1+nf1)+1))
             cj(j) = cj(j) + xc(k1)*zz
          enddo
          do k1 = -jb1d, jb1u
-	    zz = dcmplx(fw(2*(jb1+k1)),fw(2*(jb1+k1)+1))
+	    zz = cmplx(fw(2*(jb1+k1)),fw(2*(jb1+k1)+1))
             cj(j) = cj(j) + xc(k1)*zz
          enddo
          do k1 = jb1u+1, nspread
-	    zz = dcmplx(fw(2*(jb1+k1-nf1)),fw(2*(jb1+k1-nf1)+1))
+	    zz = cmplx(fw(2*(jb1+k1-nf1)),fw(2*(jb1+k1-nf1)+1))
             cj(j) = cj(j) + xc(k1)*zz
          enddo
       enddo
@@ -502,15 +506,15 @@ c
       implicit none
       integer ier,iw1,iwsave,iwtot,j,jb1,k1,kb1,kmax,nj,iflag,nk
       integer next235,nf1,nspread
-      real*8 ang,cross,cross1,diff1,eps,hx,hs,rat,pi,r2lamb1
-      real*8 sm,sb,t1,t2,xm,xb
-      real*8 xc(-147:147), xj(nj), sk(nk)
+      real*4 ang,cross,cross1,diff1,eps,hx,hs,rat,pi,r2lamb1
+      real*4 sm,sb,t1,t2,xm,xb
+      real*4 xc(-147:147), xj(nj), sk(nk)
       parameter (pi=3.141592653589793238462643383279502884197d0)
-      complex*16 cj(nj), fk(nk), zz, cs
+      complex*8 cj(nj), fk(nk), zz, cs
 c
 c ----------------------------------------------------------------------
       integer nw, istart
-      real*8, allocatable :: fw(:)
+      real*4, allocatable :: fw(:)
 c ----------------------------------------------------------------------
 c     if (iflag .ge. 0) then
 c
@@ -620,7 +624,7 @@ c
 c
       r2lamb1 = rat*rat * nspread / (rat*(rat-.5d0))
       hx = pi/(rat*sm)
-      hs = 2d0*pi/dble(nf1)/hx            ! hx hs = 2.pi/nf1
+      hs = 2d0*pi/real(nf1)/hx            ! hx hs = 2.pi/nf1
 c
 c     -------------------------------
 c     Compute workspace size and allocate
@@ -642,15 +646,16 @@ c
          fw(iw1+k1) = exp(-t1*k1**2)
       enddo
 c
+
+c Thomas: dcffti : initialize
+
       call dcffti(nf1,fw(iwsave))
-		WRITE(6,*) ">>dcffti",nf1,iwsave
-		CALL		DUMP(fw(iwsave), nf1)
 c
 c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
 c     ---------------------------------------------------------------
       do k1 = 0, 2*nf1-1
-         fw(k1) = dcmplx(0d0,0d0)
+         fw(k1) = cmplx(0d0,0d0)
       enddo
 c
 c     ---------------------------------------------------------------
@@ -660,10 +665,10 @@ c
       t1 = pi/r2lamb1
       if (iflag .lt. 0) sb = -sb
       do j = 1, nj
-         jb1 = int(dble(nf1/2) + (xj(j)-xb)/hx)
-         diff1 = dble(nf1/2) + (xj(j)-xb)/hx - jb1
+         jb1 = int(real(nf1/2) + (xj(j)-xb)/hx)
+         diff1 = real(nf1/2) + (xj(j)-xb)/hx - jb1
          ang = sb*xj(j)
-         cs = dcmplx(cos(ang),sin(ang)) * cj(j)
+         cs = cmplx(cos(ang),sin(ang)) * cj(j)
 
          xc(0) = exp(-t1*diff1**2)
          cross = xc(0)
@@ -682,8 +687,8 @@ c
          do k1 = -nspread+1, nspread
 	    istart = 2*(jb1+k1)
 	    zz = xc(k1)*cs
-            fw(istart) = fw(istart) + dreal(zz)
-            fw(istart+1) = fw(istart+1) + dimag(zz)
+            fw(istart) = fw(istart) + real(zz)
+            fw(istart+1) = fw(istart+1) + imag(zz)
          enddo
       enddo
       if (iflag .lt. 0) sb = -sb
@@ -694,33 +699,34 @@ c     Step 3: Compute FFT with shift
 c             (-1)^k F_(k+M/2) = Sum (-1)^j F_(j+M/2) e(2pi ijk/M)
 c ---------------------------------------------------------------
 c
-      t1 = pi * r2lamb1 / dble(nf1)**2
+      t1 = pi * r2lamb1 / real(nf1)**2
       cross1 = (1d0-2d0*mod(nf1/2,2))/r2lamb1
-      zz = dcmplx(fw(nf1),fw(nf1+1))
+      zz = cmplx(fw(nf1),fw(nf1+1))
       zz = cross1*zz
-      fw(nf1) = dreal(zz)
-      fw(nf1+1) = dimag(zz)
+      fw(nf1) = real(zz)
+      fw(nf1+1) = imag(zz)
       do k1 = 1, kmax
          cross1 = -cross1
-         cross = cross1*exp(t1*dble(k1)**2)
-         zz = dcmplx(fw(nf1-2*k1),fw(nf1-2*k1+1))
+         cross = cross1*exp(t1*real(k1)**2)
+         zz = cmplx(fw(nf1-2*k1),fw(nf1-2*k1+1))
          zz = cross*zz
-         fw(nf1-2*k1) = dreal(zz)
-         fw(nf1-2*k1+1) = dimag(zz)
-         zz = dcmplx(fw(nf1+2*k1),fw(nf1+2*k1+1))
+         fw(nf1-2*k1) = real(zz)
+         fw(nf1-2*k1+1) = imag(zz)
+         zz = cmplx(fw(nf1+2*k1),fw(nf1+2*k1+1))
          zz = cross*zz
-         fw(nf1+2*k1) = dreal(zz)
-         fw(nf1+2*k1+1) = dimag(zz)
+         fw(nf1+2*k1) = real(zz)
+         fw(nf1+2*k1+1) = imag(zz)
       enddo
 c
+
+c Thomas: dcfftf. fcfftb : backward, forward FFT , double precision
+C Thomas dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0),nf1,1,fw(iwsav))
+C Thomas dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0),nf1,-1,fw(iwsav))
+
       if (iflag .ge. 0) then
          call dcfftb(nf1,fw(0),fw(iwsave))
-		WRITE(6,*) ">>dcfftb",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
       else
          call dcfftf(nf1,fw(0),fw(iwsave))
-		WRITE(6,*) ">>dcfftf",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
       endif
       do k1 = 1, kmax+nspread, 2
          fw(nf1+2*k1) = -fw(nf1+2*k1)
@@ -735,8 +741,8 @@ c     Step 5 Final deconvolution
 c     ---------------------------------------------------------------
       t1 = pi/r2lamb1
       do j = 1, nk
-         kb1 = int(dble(nf1/2) + (sk(j)-sb)/hs)
-         diff1 = dble(nf1/2) + (sk(j)-sb)/hs - kb1
+         kb1 = int(real(nf1/2) + (sk(j)-sb)/hs)
+         diff1 = real(nf1/2) + (sk(j)-sb)/hs - kb1
 
          ! exp(-t1*(diff1-k1)**2) = xc(k1)
          xc(0) = exp(-t1*diff1**2)
@@ -753,9 +759,9 @@ c     ---------------------------------------------------------------
             xc(-k1) = fw(iw1+k1)*cross
          enddo
 c
-         fk(j) = dcmplx(0d0,0d0)
+         fk(j) = cmplx(0d0,0d0)
          do k1 = -nspread+1, nspread
-	    zz = dcmplx(fw(2*(kb1+k1)),fw(2*(kb1+k1)+1))
+	    zz = cmplx(fw(2*(kb1+k1)),fw(2*(kb1+k1)+1))
             fk(j) = fk(j) + xc(k1)*zz
          enddo
       enddo
@@ -765,18 +771,8 @@ c
       do j = 1, nk
          fk(j) = (exp(t1*(sk(j)-sb)**2))*fk(j)
          ang = (sk(j)-sb)*xb
-         fk(j) = dcmplx(cos(ang),sin(ang)) * fk(j)
+         fk(j) = cmplx(cos(ang),sin(ang)) * fk(j)
       enddo
       deallocate(fw)
       return
       end
-C dump array
-      SUBROUTINE DUMP(A,N)
-      IMPLICIT REAL*8 (A-H,O-Z)
-      COMPLEX*16 A(*)
-C
-      DO 10 I=1,N
-        WRITE(6,*) I,A(I)
-   10 CONTINUE
-      RETURN
-      END
