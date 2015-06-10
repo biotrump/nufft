@@ -123,3 +123,8 @@ add_executable(nufft1d_demof90-ffte nufft1d_demof90-ffte.f)
 target_link_libraries(nufft1d_demof90-ffte
 	nufft
 	${FFTELIB} )
+
+#add_executable(nufft1d_demorf90-ffte nufft1d_demorf90-ffte.f)
+#target_link_libraries(nufft1d_demorf90-ffte
+#	nufft
+#	${FFTELIB} )

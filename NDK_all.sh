@@ -10,21 +10,32 @@ if [ $TARGET_ARCH == "all" ]; then
 	if [ "$?" != "0" ]; then
 		exit -1
 	fi
-#./build_NDK_cmake.sh -abi arm64-v8a -c
-#	if [ "$?" != "0"]; then
-#		exit -1
-#	fi
+
+	./build_NDK_cmake.sh -abi arm64-v8a -c
+	if [ "$?" != "0"]; then
+		exit -1
+	fi
 
 	./build_NDK_cmake.sh -abi x86 -c
 	if [ "$?" != "0" ]; then
 		exit -1
 	fi
-#./build_NDK_cmake.sh -abi x86_64 -c
 
+	./build_NDK_cmake.sh -abi x86_64 -c
+	if [ "$?" != "0" ]; then
+		exit -1
+	fi
 
-#./build_NDK_cmake.sh -abi mips -c
+	./build_NDK_cmake.sh -abi mips -c
+	if [ "$?" != "0" ]; then
+		exit -1
+	fi
 
-#./build_NDK_cmake.sh -abi mips64 -c
+	./build_NDK_cmake.sh -abi mips64 -c
+	if [ "$?" != "0" ]; then
+		exit -1
+	fi
+
 else
 	./build_NDK_cmake.sh -abi $TARGET_ARCH -c
 	ret1=$?
