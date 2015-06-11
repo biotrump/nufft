@@ -24,7 +24,7 @@ c  Different applications have different needs, and we have chosen
 c  to provide the simplest code as a reasonable efficient template.
 c
 c**********************************************************************
-      subroutine nufft1d1rf90_ffte(nj,xj,cj,iflag,eps,ms,fk,ier)
+      subroutine nufft1d1ff90_ffte(nj,xj,cj,iflag,eps,ms,fk,ier)
       implicit none
       integer ier,iflag,istart,iw1,iwtot,iwsav
       integer j,jb1,jb1u,jb1d,k1,ms,next235,nf1,nj,nspread
@@ -162,7 +162,7 @@ c -------------------------------
       nspread = int(-log(eps)/(pi*(rat-1d0)/(rat-.5d0)) + .5d0)
       nf1 = rat*ms
       if (2*nspread.gt.nf1) then
-         nf1 = next235(2d0*nspread)
+         nf1 = next235(DBLE(2d0*nspread))
       endif
 c
 c     lambda (described above) = nspread/(rat*(rat-0.5d0))
@@ -194,8 +194,9 @@ C Thomas dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, 1, fw(iwsav))
 C Thomas dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -1, fw(iwsav))
 C      call dcffti(nf1,fw(iwsav))
 	CALL		ZFFT1F(fw(0), nf1, 0, fw(iwsav))
-	WRITE(6,*) "ZFFT1F 0",nf1,iwsav
-	CALL		DUMP(fw(iwsav), nf1)
+
+C	WRITE(6,*) "Type 1 : ZFFT1F 0",nf1,iwsav
+C	CALL		DUMPF(fw(iwsav), nf1)
 
 c
 c     ---------------------------------------------------------------
@@ -219,7 +220,7 @@ c
 c    ---------------------------------------------------------------
 c
       do j = 1, nj
-         ccj = cj(j)/dble(nj)
+         ccj = cj(j)/real(nj)
 
          jb1 = int((xj(j)+pi)/hx)
          diff1 = (xj(j)+pi)/hx - jb1
@@ -277,29 +278,29 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -
       if (iflag .ge. 0) then
 C         call dcfftb(nf1,fw(0),fw(iwsav))
 		CALL		ZFFT1F(fw(0), nf1, 1, fw(iwsav))
-		WRITE(6,*) "ZFFT1F 1",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+		WRITE(6,*) "type 1 :ZFFT1F 1",nf1,iwsav
+		CALL		DUMPF(fw(0), nf1)
       else
 C         call dcfftf(nf1,fw(0),fw(iwsav))
 		CALL		ZFFT1F(fw(0), nf1, -1, fw(iwsav))
-		WRITE(6,*) "ZFFT1F -1",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+		WRITE(6,*) "type 1 :ZFFT1F -1",nf1,iwsav
+		CALL		DUMPF(fw(0), nf1)
       endif
 c
-      tau = pi * r2lamb / dble(nf1)**2
+      tau = pi * r2lamb / real(nf1)**2
       cross1 = 1d0/sqrt(r2lamb)
       zz = cmplx(fw(0),fw(1))
       fk(0) = cross1*zz
       do k1 = 1, (ms-1)/2
          cross1 = -cross1
-         cross = cross1*exp(tau*dble(k1)**2)
+         cross = cross1*exp(tau*real(k1)**2)
 	 zz = cmplx(fw(2*k1),fw(2*k1+1))
          fk(k1) = cross*zz
 	 zz = cmplx(fw(2*(nf1-k1)),fw(2*(nf1-k1)+1))
          fk(-k1) = cross*zz
       enddo
       if (ms/2*2.eq.ms) then
-         cross = -cross1*exp(tau*dble(ms/2)**2)
+         cross = -cross1*exp(tau*real(ms/2)**2)
          zz = cmplx(fw(2*nf1-ms),fw(2*nf1-ms+1))
          fk(-ms/2) = cross*zz
       endif
@@ -312,7 +313,7 @@ c
 c
 c
 ************************************************************************
-      subroutine nufft1d2rf90_ffte(nj,xj,cj, iflag,eps, ms,fk,ier)
+      subroutine nufft1d2ff90_ffte(nj,xj,cj, iflag,eps, ms,fk,ier)
       implicit none
       integer ier,iflag,iw1,iwsav,iwtot,j,jb1,jb1u,jb1d,k1
       integer ms,next235,nf1,nj,nspread,nw
@@ -363,7 +364,7 @@ c     2) compute inverse FFT on uniform fine grid
 c     3) spread data to regular mesh using Gaussian
 c
 c
-c     See subroutine nufft1d1rf90_ffte(nj,xj,cj,iflag,eps,ms,fk,ier)
+c     See subroutine nufft1d1ff90_ffte(nj,xj,cj,iflag,eps,ms,fk,ier)
 c     for more comments on fast gridding and parameter selection.
 c
 ************************************************************************
@@ -393,7 +394,7 @@ c
       nspread = int(-log(eps)/(pi*(rat-1d0)/(rat-.5d0)) + .5d0)
       nf1 = rat*ms
       if (2*nspread.gt.nf1) then
-         nf1 = next235(2d0*nspread)
+         nf1 = next235(DBLE(2d0*nspread))
       endif
 c
       r2lamb = rat*rat * nspread / (rat*(rat-.5d0))
@@ -422,8 +423,9 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -
 
 C      call dcffti(nf1,fw(iwsav))
 	CALL ZFFT1F(fw(0), nf1, 0, fw(iwsav))
-	WRITE(6,*) ">ZFFT1F 0",nf1,iwsav
-	CALL		DUMP(fw(0), nf1)
+
+C	WRITE(6,*) ">ZFFT1F 0",nf1,iwsav
+C	CALL		DUMPF(fw(0), nf1)
 
 c
 c     ---------------------------------------------------------------
@@ -431,14 +433,14 @@ c     Deconvolve and compute inverse 1D FFT
 c     (A factor of (-1)**k is needed to shift phase.)
 c     ---------------------------------------------------------------
 c
-      t1 = pi * r2lamb / dble(nf1)**2
+      t1 = pi * r2lamb / real(nf1)**2
       cross1 = 1d0/sqrt(r2lamb)
       zz = cross1*fk(0)
       fw(0) = real(zz)
       fw(1) = imag(zz)
       do k1 = 1, (ms-1)/2
          cross1 = -cross1
-         cross = cross1*exp(t1*dble(k1)**2)
+         cross = cross1*exp(t1*real(k1)**2)
          zz = cross*fk(k1)
          fw(2*k1) = real(zz)
          fw(2*k1+1) = imag(zz)
@@ -446,7 +448,7 @@ c
          fw(2*(nf1-k1)) = real(zz)
          fw(2*(nf1-k1)+1) = imag(zz)
       enddo
-      cross = -cross1*exp(t1*dble(ms/2)**2)
+      cross = -cross1*exp(t1*real(ms/2)**2)
       if (ms/2*2.eq.ms) then
 	 zz = cross*fk(-ms/2)
          fw(2*nf1-ms) = real(zz)
@@ -466,12 +468,12 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -
 C         call dcfftb(nf1,fw(0),fw(iwsav))
 		CALL ZFFT1F(fw(0), nf1, 1, fw(iwsav))
 		WRITE(6,*) ">ZFFT1F 1",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+		CALL		DUMPF(fw(0), nf1)
       else
 C         call dcfftf(nf1,fw(0),fw(iwsav))
 		CALL ZFFT1F(fw(0), nf1, -1, fw(iwsav))
 		WRITE(6,*) ">ZFFT1F -1",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+		CALL		DUMPF(fw(0), nf1)
       endif
 
 c
@@ -528,12 +530,12 @@ c
 c
 c
 ************************************************************************
-      subroutine nufft1d3rf90_ffte(nj,xj,cj, iflag,eps, nk,sk,fk,ier)
+      subroutine nufft1d3ff90_ffte(nj,xj,cj, iflag,eps, nk,sk,fk,ier)
       implicit none
       integer ier,iw1,iwsave,iwtot,j,jb1,k1,kb1,kmax,nj,iflag,nk
       integer next235,nf1,nspread
       real*4 ang,cross,cross1,diff1,eps,hx,hs,rat,pi,r2lamb1
-      real*4 sm,sb,t1,t2,xm,xb
+      real*4 sm,sb,t1,t2,xm,xb,max_t,nf1_t
       real*4 xc(-147:147), xj(nj), sk(nk)
       parameter (pi=3.141592653589793238462643383279502884197d0)
       complex*8 cj(nj), fk(nk), zz, cs
@@ -645,12 +647,19 @@ c     -------------------------------
 c
       nspread = int(-log(eps)/(pi*(rat-1d0)/(rat-.5d0)) + .5d0)
       t1 = 2d0/pi * xm*sm
-      nf1 = next235(rat*max(rat*t1+2*nspread,2*nspread/(rat-1)))
+
+C      WRITE(6,*) "rat=",rat, "t1=", t1, "nspread=", nspread
+C      WRITE(6,*) "max=", max(rat*t1+2*nspread,2*nspread/(rat-1))
+
+      nf1 = next235(DBLE(rat*max(rat*t1+2*nspread,2*nspread/(rat-1))))
+
+C      WRITE(6,*) "nf1=", nf1
+
       rat = (sqrt(nf1*t1+nspread**2)-nspread)/t1
 c
       r2lamb1 = rat*rat * nspread / (rat*(rat-.5d0))
       hx = pi/(rat*sm)
-      hs = 2d0*pi/dble(nf1)/hx            ! hx hs = 2.pi/nf1
+      hs = 2d0*pi/real(nf1)/hx            ! hx hs = 2.pi/nf1
 c
 c     -------------------------------
 c     Compute workspace size and allocate
@@ -679,8 +688,10 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -
 
 C      call dcffti(nf1,fw(iwsave))
 		CALL ZFFT1F(fw(0), nf1, 0, fw(iwsave))
-		WRITE(6,*) ">>ZFFT1F 0",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
+
+C		WRITE(6,*) ">>ZFFT1F 0",nf1,iwsave
+C		CALL		DUMPF(fw(0), nf1)
+
 c
 c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
@@ -696,8 +707,8 @@ c
       t1 = pi/r2lamb1
       if (iflag .lt. 0) sb = -sb
       do j = 1, nj
-         jb1 = int(dble(nf1/2) + (xj(j)-xb)/hx)
-         diff1 = dble(nf1/2) + (xj(j)-xb)/hx - jb1
+         jb1 = int(real(nf1/2) + (xj(j)-xb)/hx)
+         diff1 = real(nf1/2) + (xj(j)-xb)/hx - jb1
          ang = sb*xj(j)
          cs = cmplx(cos(ang),sin(ang)) * cj(j)
 
@@ -730,7 +741,7 @@ c     Step 3: Compute FFT with shift
 c             (-1)^k F_(k+M/2) = Sum (-1)^j F_(j+M/2) e(2pi ijk/M)
 c ---------------------------------------------------------------
 c
-      t1 = pi * r2lamb1 / dble(nf1)**2
+      t1 = pi * r2lamb1 / real(nf1)**2
       cross1 = (1d0-2d0*mod(nf1/2,2))/r2lamb1
       zz = cmplx(fw(nf1),fw(nf1+1))
       zz = cross1*zz
@@ -738,7 +749,7 @@ c
       fw(nf1+1) = imag(zz)
       do k1 = 1, kmax
          cross1 = -cross1
-         cross = cross1*exp(t1*dble(k1)**2)
+         cross = cross1*exp(t1*real(k1)**2)
          zz = cmplx(fw(nf1-2*k1),fw(nf1-2*k1+1))
          zz = cross*zz
          fw(nf1-2*k1) = real(zz)
@@ -758,12 +769,12 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -
 C         call dcfftb(nf1,fw(0),fw(iwsave))
 		CALL ZFFT1F(fw(0), nf1, 1, fw(iwsave))
 		WRITE(6,*) ">>ZFFT1F 1",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
+		CALL		DUMPF(fw(0), nf1)
       else
 C         call dcfftf(nf1,fw(0),fw(iwsave))
 		CALL ZFFT1F(fw(0), nf1, -1, fw(iwsave))
 		WRITE(6,*) ">>ZFFT1F -1",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
+		CALL		DUMPF(fw(0), nf1)
       endif
       do k1 = 1, kmax+nspread, 2
          fw(nf1+2*k1) = -fw(nf1+2*k1)
@@ -778,8 +789,8 @@ c     Step 5 Final deconvolution
 c     ---------------------------------------------------------------
       t1 = pi/r2lamb1
       do j = 1, nk
-         kb1 = int(dble(nf1/2) + (sk(j)-sb)/hs)
-         diff1 = dble(nf1/2) + (sk(j)-sb)/hs - kb1
+         kb1 = int(real(nf1/2) + (sk(j)-sb)/hs)
+         diff1 = real(nf1/2) + (sk(j)-sb)/hs - kb1
 
          ! exp(-t1*(diff1-k1)**2) = xc(k1)
          xc(0) = exp(-t1*diff1**2)
@@ -814,11 +825,14 @@ c
       return
       end
 C dump array
-      SUBROUTINE DUMP(A,N)
-      IMPLICIT REAL*8 (A-H,O-Z)
-      COMPLEX*16 A(*)
+      SUBROUTINE DUMPF(A,N)
+      IMPLICIT REAL*4 (A-H,O-Z)
+      COMPLEX*8 A(*)
 C
       DO 10 I=1,N
+C normalize the output by dividing N
+C multiplies N back
+		A(I) = DCMPLX(REAL(A(I)), IMAG(A(I))) * N
         WRITE(6,*) I,A(I)
    10 CONTINUE
       RETURN

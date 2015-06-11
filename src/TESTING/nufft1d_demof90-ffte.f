@@ -95,6 +95,10 @@ c
 c
       ealg = 0d0
       salg = 0d0
+
+C fk1 is from ffte, so it has been normalized by dividing sample number,
+C but dirft1df? does not normalize the result.
+
       do k = 1, n
          ealg = ealg + cdabs(fk1(k)-fk0(k))**2
          salg = salg + cdabs(fk0(k))**2

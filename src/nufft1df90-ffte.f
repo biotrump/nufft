@@ -194,8 +194,9 @@ C Thomas dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, 1, fw(iwsav))
 C Thomas dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -1, fw(iwsav))
 C      call dcffti(nf1,fw(iwsav))
 	CALL		ZFFT1D(fw(0), nf1, 0, fw(iwsav))
-	WRITE(6,*) "ZFFT1D 0",nf1,iwsav
-	CALL		DUMP(fw(iwsav), nf1)
+
+C	WRITE(6,*) "ZFFT1D 0",nf1,iwsav
+C	CALL		DUMP(fw(iwsav), nf1)
 
 c
 c     ---------------------------------------------------------------
@@ -422,8 +423,9 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -
 
 C      call dcffti(nf1,fw(iwsav))
 	CALL ZFFT1D(fw(0), nf1, 0, fw(iwsav))
-	WRITE(6,*) ">ZFFT1D 0",nf1,iwsav
-	CALL		DUMP(fw(0), nf1)
+
+C	WRITE(6,*) ">ZFFT1D 0",nf1,iwsav
+C	CALL		DUMP(fw(0), nf1)
 
 c
 c     ---------------------------------------------------------------
@@ -645,7 +647,14 @@ c     -------------------------------
 c
       nspread = int(-log(eps)/(pi*(rat-1d0)/(rat-.5d0)) + .5d0)
       t1 = 2d0/pi * xm*sm
+
+      WRITE(6,*) "rat=",rat, "t1=", t1, "nspread=", nspread
+      WRITE(6,*) "max=", max(rat*t1+2*nspread,2*nspread/(rat-1))
+
       nf1 = next235(rat*max(rat*t1+2*nspread,2*nspread/(rat-1)))
+
+		WRITE(6,*) "nf1=", nf1
+
       rat = (sqrt(nf1*t1+nspread**2)-nspread)/t1
 c
       r2lamb1 = rat*rat * nspread / (rat*(rat-.5d0))
@@ -679,8 +688,10 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -
 
 C      call dcffti(nf1,fw(iwsave))
 		CALL ZFFT1D(fw(0), nf1, 0, fw(iwsave))
-		WRITE(6,*) ">>ZFFT1D 0",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
+
+C		WRITE(6,*) ">>ZFFT1D 0",nf1,iwsave
+C		CALL		DUMP(fw(0), nf1)
+
 c
 c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
@@ -819,6 +830,9 @@ C dump array
       COMPLEX*16 A(*)
 C
       DO 10 I=1,N
+C normalize the output by dividing N
+C multiplies N back
+		A(I) = A(I) * N
         WRITE(6,*) I,A(I)
    10 CONTINUE
       RETURN

@@ -57,7 +57,7 @@
 #set(DBLAS1 idamax.f dasum.f daxpy.f dcopy.f ddot.f dnrm2.f
 #	drot.f drotg.f dscal.f dsdot.f dswap.f drotmg.f drotm.f)
 #nufft*d_demof90.f nufft*df90.f dirft*d.f dfftpack.f next235.f
-set(ZNUFFTF90-FFTE nufft1df90-ffte.f nufft1drf90-ffte.f)
+set(ZNUFFTF90-FFTE dirft1df.f nufft1df90-ffte.f nufft1df90f-ffte.f)
 
 set(ZNUFFTF90 next235.f dirft1d.f dirft2d.f dirft3d.f
 	nufft1df90.f nufft2df90.f nufft3df90.f)
