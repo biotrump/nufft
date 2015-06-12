@@ -26,8 +26,9 @@ if [ -z "${NUFFT_SRC}" ];then
 export NUFFT_SRC=`pwd`
 fi
 
-BUILD_NUFFT_GENERIC=1
-BUILD_NUFFT_VEC=0
+BUILD_NUFFT_GENERIC=0
+BUILD_NUFFT_VEC=1
+export FFTE_LIB_NAME=ffte
 BUILD_NUFFT_NEON=0
 BUILD_NUFFT_CUDA=0
 
@@ -38,9 +39,11 @@ while [ $# -ge 1 ]; do
 		case $1 in
 		GENERIC|generic)
 			BUILD_NUFFT_GENERIC=1
+			export FFTE_LIB_NAME=ffte
 			;;
 		VEC|vec)
 			BUILD_NUFFT_VEC=1
+			export FFTE_LIB_NAME=ffte_vec
 			;;
 
 		NEON|neon)
@@ -53,6 +56,7 @@ while [ $# -ge 1 ]; do
 
 		*)
 			BUILD_NUFFT_GENERIC=1
+			export FFTE_LIB_NAME=ffte
 			;;
 		esac
 		shift
@@ -97,9 +101,8 @@ fi
 
 pushd ${NUFFT_OUT}/$TARGET_ARCH
 
-export FFTE_LIB_NAME=ffte_vec
 cmake -DFFTE_DIR:FILEPATH=${FFTE_DIR} -DFFTE_LIB_NAME=${FFTE_LIB_NAME} \
-	-DFFTE_OUT:FILEPATH=${FFTE_OUT}/libs/$APP_ABI \
+	-DFFTE_OUT:FILEPATH=${FFTE_OUT}/libs/$TARGET_ARCH \
 	${NUFFT_DIR}
 
 ret=$?
