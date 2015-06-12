@@ -36,8 +36,8 @@ c
       print*,' Start 1D testing: ', ' nj =',nj, ' ms =',ms
       do i = 1,4
          if (i.eq.1) eps=1d-4
-         if (i.eq.2) eps=1d-8
-         if (i.eq.3) eps=1d-12
+         if (i.eq.2) eps=1d-14
+         if (i.eq.3) eps=1d-15
          if (i.eq.4) eps=1d-16
 c extended/quad precision tests
          if (i.eq.5) eps=1d-20
