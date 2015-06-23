@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.10)
-project(NUFFT Fortran)
+project(NUFFT Fortran C CXX)
 
 set(NUFFT_VERSION 1.3.2)
 
@@ -51,6 +51,8 @@ else(ANDROID_NDK)
 	message ("*** Fortran compiler RELEASE FLAGS: " ${CMAKE_Fortran_FLAGS_RELEASE})
 	message ("*** Fortran compiler DEBUG FLAGS: " ${CMAKE_Fortran_FLAGS_DEBUG})
 endif(ANDROID_NDK)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fPIC -D_POSIX_C_SOURCE=200112L")
 
 # Get Python
 IF(WIN32 AND NOT UNIX)

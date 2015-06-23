@@ -4,7 +4,7 @@ cc
 cc This software is being released under a FreeBSD license
 cc (see license.txt in this directory).
 c***********************************************************************
-      subroutine dirft1df1(nj,xj,cj, iflag, ms,fk)
+      subroutine dirft1d1f(nj,xj,cj, iflag, ms,fk)
       implicit none
       integer nj, iflag, ms
       real*4 xj(nj)
@@ -56,7 +56,7 @@ c
 c
 c
 c***********************************************************************
-      subroutine dirft1df2(nj,xj,cj, iflag, ms,fk)
+      subroutine dirft1d2f(nj,xj,cj, iflag, ms,fk)
       implicit none
       integer nj, iflag, ms
       real*4 xj(nj)
@@ -100,7 +100,7 @@ c
 c
 c
 c***********************************************************************
-      subroutine dirft1df3(nj,xj,cj, iflag, nk,sk,fk)
+      subroutine dirft1d3f(nj,xj,cj, iflag, nk,sk,fk)
       implicit none
       integer nj, iflag, nk
       real*4 xj(nj), sk(nk)

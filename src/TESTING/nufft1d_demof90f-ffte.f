@@ -27,6 +27,7 @@ c     --------------------------------------------------
          j = k1+nj/2+1
          xj(j) = pi * cos(-pi*j/nj)
          cj(j) = cmplx( sin(pi*j/nj), cos(pi*j/nj))
+         print*,xj(j),cj(j)
       enddo
 c
 c     --------------------------------------------------
@@ -54,7 +55,7 @@ c     -----------------------
 c     call 1D Type1 method
 c     -----------------------
 c
-         call dirft1df1(nj,xj,cj,iflag, ms,fk0)
+         call dirft1d1f(nj,xj,cj,iflag, ms,fk0)
          call nufft1d1ff90_ffte(nj,xj,cj,iflag,eps, ms,fk1,ier)
          call errcompf(fk0,fk1,ms,err)
          print *,' ier = ',ier
@@ -64,7 +65,7 @@ c     -----------------------
 c     call 1D Type2 method
 c     -----------------------
 c
-         call dirft1df2(nj,xj,cj0,iflag, ms,fk0,ier)
+         call dirft1d2f(nj,xj,cj0,iflag, ms,fk0,ier)
          call nufft1d2ff90_ffte(nj,xj,cj1,iflag, eps, ms,fk0,ier)
          call errcompf(cj0,cj1,nj,err)
          print *,' ier = ',ier
@@ -76,7 +77,7 @@ c     -----------------------
          do k1 = 1, ms
             sk(k1) = 48*cos(k1*pi/ms)
          enddo
-         call dirft1df3(nj,xj,cj,iflag, ms,sk,fk0)
+         call dirft1d3f(nj,xj,cj,iflag, ms,sk,fk0)
          call nufft1d3ff90_ffte(nj,xj,cj,iflag,eps, ms,sk,fk1,ier)
          call errcompf(cj0,cj1,nj,err)
          print *,' ier = ',ier
@@ -95,13 +96,15 @@ c
       complex*8 fk0(n), fk1(n)
       real *8 salg,ealg,err
 c
-      ealg = 0d0
-      salg = 0d0
+      ealg = 0e0
+      salg = 0e0
 
       do k = 1, n
-         ealg = ealg + DBLE(cabs(fk1(k)-fk0(k)))**2
-         salg = salg + DBLE(cabs(fk0(k)))**2
+         ealg = ealg + REAL(cabs(fk1(k)-fk0(k)))**2
+         salg = salg + REAL(cabs(fk0(k)))**2
+         print *,fk1(k),fk0(k)
       enddo
+      print *,'ealg,salg:',ealg,salg
       err =sqrt(ealg/salg)
       return
       end

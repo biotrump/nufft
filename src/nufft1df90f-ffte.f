@@ -319,7 +319,7 @@ c
       integer ms,next235,nf1,nj,nspread,nw
       real*4 cross,cross1,diff1,eps,hx,pi,rat,r2lamb,t1
       real*4 xj(nj),xc(-147:147)
-      parameter (pi=3.141592653589793238462643383279502884197d0)
+      parameter (pi=3.141592653589793238462643383279502884197e0)
       complex*8 cj(nj), fk(-ms/2:(ms-1)/2)
       complex*8 zz
 c ----------------------------------------------------------------------
