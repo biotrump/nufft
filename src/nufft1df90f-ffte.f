@@ -278,13 +278,13 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -
       if (iflag .ge. 0) then
 C         call dcfftb(nf1,fw(0),fw(iwsav))
 		CALL		ZFFT1F(fw(0), nf1, 1, fw(iwsav))
-		WRITE(6,*) "type 1 :ZFFT1F 1",nf1,iwsav
-		CALL		DUMPF(fw(0), nf1)
+C		WRITE(6,*) "type 1 :ZFFT1F 1",nf1,iwsav
+C		CALL		DUMPF(fw(0), nf1)
       else
 C         call dcfftf(nf1,fw(0),fw(iwsav))
 		CALL		ZFFT1F(fw(0), nf1, -1, fw(iwsav))
-		WRITE(6,*) "type 1 :ZFFT1F -1",nf1,iwsav
-		CALL		DUMPF(fw(0), nf1)
+C		WRITE(6,*) "type 1 :ZFFT1F -1",nf1,iwsav
+C		CALL		DUMPF(fw(0), nf1)
       endif
 c
       tau = pi * r2lamb / real(nf1)**2
@@ -467,13 +467,13 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -
       if (iflag .ge. 0) then
 C         call dcfftb(nf1,fw(0),fw(iwsav))
 		CALL ZFFT1F(fw(0), nf1, 1, fw(iwsav))
-		WRITE(6,*) ">ZFFT1F 1",nf1,iwsav
-		CALL		DUMPF(fw(0), nf1)
+C		WRITE(6,*) ">ZFFT1F 1",nf1,iwsav
+C		CALL		DUMPF(fw(0), nf1)
       else
 C         call dcfftf(nf1,fw(0),fw(iwsav))
 		CALL ZFFT1F(fw(0), nf1, -1, fw(iwsav))
-		WRITE(6,*) ">ZFFT1F -1",nf1,iwsav
-		CALL		DUMPF(fw(0), nf1)
+C		WRITE(6,*) ">ZFFT1F -1",nf1,iwsav
+C		CALL		DUMPF(fw(0), nf1)
       endif
 
 c
@@ -768,13 +768,13 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -
       if (iflag .ge. 0) then
 C         call dcfftb(nf1,fw(0),fw(iwsave))
 		CALL ZFFT1F(fw(0), nf1, 1, fw(iwsave))
-		WRITE(6,*) ">>ZFFT1F 1",nf1,iwsave
-		CALL		DUMPF(fw(0), nf1)
+C		WRITE(6,*) ">>ZFFT1F 1",nf1,iwsave
+C		CALL		DUMPF(fw(0), nf1)
       else
 C         call dcfftf(nf1,fw(0),fw(iwsave))
 		CALL ZFFT1F(fw(0), nf1, -1, fw(iwsave))
-		WRITE(6,*) ">>ZFFT1F -1",nf1,iwsave
-		CALL		DUMPF(fw(0), nf1)
+C		WRITE(6,*) ">>ZFFT1F -1",nf1,iwsave
+C		CALL		DUMPF(fw(0), nf1)
       endif
       do k1 = 1, kmax+nspread, 2
          fw(nf1+2*k1) = -fw(nf1+2*k1)

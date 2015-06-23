@@ -278,13 +278,13 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -
       if (iflag .ge. 0) then
 C         call dcfftb(nf1,fw(0),fw(iwsav))
 		CALL		ZFFT1D(fw(0), nf1, 1, fw(iwsav))
-		WRITE(6,*) "ZFFT1D 1",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) "ZFFT1D 1",nf1,iwsav
+C		CALL		DUMP(fw(0), nf1)
       else
 C         call dcfftf(nf1,fw(0),fw(iwsav))
 		CALL		ZFFT1D(fw(0), nf1, -1, fw(iwsav))
-		WRITE(6,*) "ZFFT1D -1",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) "ZFFT1D -1",nf1,iwsav
+C		CALL		DUMP(fw(0), nf1)
       endif
 c
       tau = pi * r2lamb / dble(nf1)**2
@@ -467,13 +467,13 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -
       if (iflag .ge. 0) then
 C         call dcfftb(nf1,fw(0),fw(iwsav))
 		CALL ZFFT1D(fw(0), nf1, 1, fw(iwsav))
-		WRITE(6,*) ">ZFFT1D 1",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) ">ZFFT1D 1",nf1,iwsav
+C		CALL		DUMP(fw(0), nf1)
       else
 C         call dcfftf(nf1,fw(0),fw(iwsav))
 		CALL ZFFT1D(fw(0), nf1, -1, fw(iwsav))
-		WRITE(6,*) ">ZFFT1D -1",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) ">ZFFT1D -1",nf1,iwsav
+C		CALL		DUMP(fw(0), nf1)
       endif
 
 c
@@ -648,12 +648,12 @@ c
       nspread = int(-log(eps)/(pi*(rat-1d0)/(rat-.5d0)) + .5d0)
       t1 = 2d0/pi * xm*sm
 
-      WRITE(6,*) "rat=",rat, "t1=", t1, "nspread=", nspread
-      WRITE(6,*) "max=", max(rat*t1+2*nspread,2*nspread/(rat-1))
+C      WRITE(6,*) "rat=",rat, "t1=", t1, "nspread=", nspread
+C      WRITE(6,*) "max=", max(rat*t1+2*nspread,2*nspread/(rat-1))
 
       nf1 = next235(rat*max(rat*t1+2*nspread,2*nspread/(rat-1)))
 
-		WRITE(6,*) "nf1=", nf1
+C		WRITE(6,*) "nf1=", nf1
 
       rat = (sqrt(nf1*t1+nspread**2)-nspread)/t1
 c
@@ -768,13 +768,13 @@ C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1D(fw(0), nf1, -
       if (iflag .ge. 0) then
 C         call dcfftb(nf1,fw(0),fw(iwsave))
 		CALL ZFFT1D(fw(0), nf1, 1, fw(iwsave))
-		WRITE(6,*) ">>ZFFT1D 1",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) ">>ZFFT1D 1",nf1,iwsave
+C		CALL		DUMP(fw(0), nf1)
       else
 C         call dcfftf(nf1,fw(0),fw(iwsave))
 		CALL ZFFT1D(fw(0), nf1, -1, fw(iwsave))
-		WRITE(6,*) ">>ZFFT1D -1",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) ">>ZFFT1D -1",nf1,iwsave
+C		CALL		DUMP(fw(0), nf1)
       endif
       do k1 = 1, kmax+nspread, 2
          fw(nf1+2*k1) = -fw(nf1+2*k1)

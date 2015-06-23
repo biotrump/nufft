@@ -74,7 +74,7 @@ void errcompf(PCOMPLEX8 fk0, PCOMPLEX8 fk1, int n, double *err)
 	printf("ealg/salg:%g/%g err=%e\n",ealg, salg, *err);
 }
 
-#define	MX	(100000)
+#define	MX	(1000)
 
 int main(int argc, char **argv)
 {
@@ -120,6 +120,14 @@ int main(int argc, char **argv)
         nufft1d1ff90_ffte_(&nj, xj, cj, &iflag, &eps, &ms, fk1, &ier);
         errcompf(fk0, fk1, ms, &err);
         printf(" ier = %d  type 1 error = %E\n", ier, err);
+
+		for(int j = 0; j < ms; j ++){
+//			printf("\n%d:%f,%fbpm\n", j , j*deltaF, j*deltaBPM);
+			printf("%d:fk0=(%f,%f),fk1=(%f,%f)\n", j, fk0[j].r,fk0[j].i,
+				fk1[j].r,fk1[j].i);
+			printf("(%f,%f)\n",cabsf_sq(fk0[j]), cabsf_sq(fk1[j]));
+		}
+
 //
 //     -----------------------
 //    1D Type2 method

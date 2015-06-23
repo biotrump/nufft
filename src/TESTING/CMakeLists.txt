@@ -130,7 +130,13 @@ target_link_libraries(nufft1d_demof90f-ffte
 	${FFTELIB} )
 
 include_directories("${NUFFT_SOURCE_DIR}/src")
+
 add_executable(nufft1df_ffte nufft1df_ffte.c)
 target_link_libraries(nufft1df_ffte
+	nufft
+	${FFTELIB} )
+
+add_executable(nufft1df-hr nufft1df-hr.c)
+target_link_libraries(nufft1df-hr
 	nufft
 	${FFTELIB} )
