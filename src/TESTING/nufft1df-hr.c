@@ -82,7 +82,7 @@ void nufft_hr(void)
 {
 	int nj = 51;
 	int ier=0, iflag=-1;
-	int ms= 54;
+	int ms= 64;
 	float eps=1e-5;
 	double err=0.0f;
 	double observingT=0.0f;
@@ -107,19 +107,23 @@ void nufft_hr(void)
 		xj[i]= (elapsed10[i]- observingT/2.0f) * (2.0f * M_PI / observingT);
 		printf("%f\n", xj[i]);
 	}
+
+	/* nufft does not change the observing period, but the sampling number
+	 * from N->2M, so only the highest working frequency changes.
+	 */
 	observingT /= 10.0f;//100ms->1second
-	observingT = observingT * ms/nj;
 	deltaF=1.0f/observingT;
 	deltaBPM=60.0f * deltaF;
+	printf("nj=%d, ms=%d\n", nj,ms);
 	printf("observingT=%f, dF=%f, dBPM=%f\n", observingT, deltaF, deltaBPM);
-
 	for(int i = 0; i < size_raw; i ++){
 		cj[i].r= raw_trace10[i];
 		cj[i].i=0.0f;
 	}
+
 	iflag=1;//forward
 	dirft1d1f_(&nj, xj, cj, &iflag, &ms, fk0);
-	iflag=1;	//forward
+	iflag=-1;	//forward
 	nufft1d1ff90_ffte_(&nj, xj, cj, &iflag, &eps, &ms, fk1, &ier);
 	errcompf(fk0, fk1, ms, &err);
 	printf("ier=%d, err=%f\n", ier, err);
@@ -149,29 +153,29 @@ void nufft_hr(void)
 		printf("mI=%d,bpm=%f, max=%f\n", mI, (mI - ms/2)*deltaBPM, dMax);
 }
 
+//http://forum.cvapp.org/viewtopic.php?f=21&t=431&sid=4e8c86381ce6b3a43a53d7d8f8b22058
 void nufft_sine(void)
 {
-	int i,ier,iflag,j,k1,ms,nj;
-	float xj[MX], sk[MX];
+	int ier,iflag,j,k1,ms,nj;
+	float xj[MX];
 	float eps=1e-6;
 	double err;
-	COMPLEX8 cj[MX],cj0[MX],cj1[MX];
+	COMPLEX8 cj[MX];
 	COMPLEX8 fk0[MX],fk1[MX];
 	double observingT=0.0f;
-	double deltaF=0.0f,deltaBPM=0.0f;
 //
 //     --------------------------------------------------
 //     create some test data
 //     --------------------------------------------------
-	ms = 64;
-	nj = 64;
+	ms = 32;	//oversampling 2*ms in time domain
+	nj = 48;
 	//fortran array index from "1", but c is from "0"
 	for(k1 = -nj/2; k1 <= (nj-1)/2;k1++){
 		j = k1+nj/2;
 		//xj[j] = M_PI * cos(-M_PI*(j+1)/nj);
 		xj[j] = M_PI * k1/(nj/2);
-		//cos(2.0*M_PI*(j+1)/nj)+
-		cj[j] = cmplxf(cos(8.5*M_PI*(j+1)/nj), 0.0f);
+		cj[j] = cmplxf(cos(5.0*xj[j])+cos(1.0*xj[j]),
+					   sin(2.0*xj[j]));
 		printf("%d,%d:%f, (%f,%f)\n", k1, j, xj[j], cj[j].r, cj[j].i);
 	}
 
@@ -182,16 +186,14 @@ void nufft_sine(void)
 	errcompf(fk0, fk1, ms, &err);
 	printf("ier=%d, err=%f\n", ier, err);
 	for(int i = 0; i < ms; i ++){
-		printf("\n%d:%f,%fbpm\n", i , i*deltaF, i*deltaBPM);
-		printf("fk0=(%f,%f),fk1=(%f,%f)\n", fk0[i].r,fk0[i].i,
+		printf("%d:fk0=(%f,%f),fk1=(%f,%f)\n", i, fk0[i].r,fk0[i].i,
 			fk1[i].r,fk1[i].i);
 		printf("(%f,%f)\n",cabsf_sq(fk0[i]), cabsf_sq(fk1[i]));
 	}
-
 }
 
 int main(int argc, char **argv)
 {
-	//nufft_sine();
+	nufft_sine();
 	nufft_hr();
 }

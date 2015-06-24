@@ -61,11 +61,11 @@ c ----------------------------------------------------------------------
 c     INPUT:
 c
 c     nj     number of sources   (integer)
-c     xj     location of sources (real *8)
+c     xj     location of sources (real *4)
 c
 c            on interval [-pi,pi].
 c
-c     cj     strengths of sources (complex *16)
+c     cj     strengths of sources (complex *8)
 c     iflag  determines sign of FFT (see above)
 c     eps    precision request  (between 1.0d-33 and 1.0d-1)
 c               recomended value is 1d-15 for double precision calculations
@@ -203,7 +203,7 @@ c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
 c     ---------------------------------------------------------------
       do k1 = 0, 2*nf1-1
-         fw(k1) = cmplx(0d0,0d0)
+         fw(k1) = cmplx(0e0,0e0)
       enddo
 c
 c     ---------------------------------------------------------------
