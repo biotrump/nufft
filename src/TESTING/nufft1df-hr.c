@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include <assert.h>
 #include <math.h>
@@ -82,7 +83,7 @@ void nufft_hr(void)
 {
 	int nj = 51;
 	int ier=0, iflag=-1;
-	int ms= 64;
+	int ms= 32;
 	float eps=1e-5;
 	double err=0.0f;
 	double observingT=0.0f;
@@ -90,21 +91,26 @@ void nufft_hr(void)
 	COMPLEX8 cj[MX];//,cj0[MX],cj1[MX];
     COMPLEX8 fk0[MX],fk1[MX];
 	float *xj;
-	//float xj[MX], sk[MX];
+	float *elapsed[]={elapsed4, elapsed5, elapsed10};
+	float *raw_trace[]={raw_trace4, raw_trace5, raw_trace10};
 /*
- * xj : x position
+ * xj : non-equspaced x position
  * cj : y position
  */
-	int size_x=sizeof(elapsed10)/sizeof(float);
-	int size_raw=sizeof(raw_trace10)/sizeof(float);
+
+	//int size_x=sizeof(elapsed[0])/sizeof(float);
+	//int size_raw=sizeof(raw_trace[0])/sizeof(float);
+	int size_x=sizeof(elapsed5)/sizeof(float);
+	int size_raw=sizeof(raw_trace5)/sizeof(float);
 	printf("size_x=%d,size_raw=%d\n", size_x, size_raw);
-	xj=elapsed10;	//time, spatial domain, x position, non-uniform
-	observingT = elapsed10[size_x-1];//100ms->1second
+	nj=size_x;
+	xj=elapsed[1];	//time, spatial domain, x position, non-uniform
+	observingT = elapsed[1][size_x-1];//100ms->1second
 	/* xj[] is normalized to [-PI,+PI]
 	 * (2*PI / T) * (t - T/2)
 	 */
 	for(int i = 0; i < size_x; i ++){
-		xj[i]= (elapsed10[i]- observingT/2.0f) * (2.0f * M_PI / observingT);
+		xj[i]= (elapsed[1][i]- observingT/2.0f) * (2.0f * M_PI / observingT);
 		printf("%f\n", xj[i]);
 	}
 
@@ -114,23 +120,36 @@ void nufft_hr(void)
 	observingT /= 10.0f;//100ms->1second
 	deltaF=1.0f/observingT;
 	deltaBPM=60.0f * deltaF;
+
+	/* ms points in frequency domain, so at least
+	 * 180.0bpm/deltaBPM are needed.
+	 * ms is oversampling 2*ms in time domain, but
+	 * ms points in frequency domain.
+	 * half of ms, ms/2, are mirrored, so 2*ms are needed.
+	 */
+	double dms=ceil(180.0f/deltaBPM)*2.0f;
+	ms = next235_(&dms);
+
 	printf("nj=%d, ms=%d\n", nj,ms);
 	printf("observingT=%f, dF=%f, dBPM=%f\n", observingT, deltaF, deltaBPM);
 	for(int i = 0; i < size_raw; i ++){
-		cj[i].r= raw_trace10[i];
+		cj[i].r= raw_trace[1][i];
 		cj[i].i=0.0f;
 	}
 
-	iflag=1;//forward
+	iflag=-1;//forward
 	dirft1d1f_(&nj, xj, cj, &iflag, &ms, fk0);
 	iflag=-1;	//forward
 	nufft1d1ff90_ffte_(&nj, xj, cj, &iflag, &eps, &ms, fk1, &ier);
 	errcompf(fk0, fk1, ms, &err);
-	printf("ier=%d, err=%f\n", ier, err);
+	printf("ier=%d, err=%e\n", ier, err);
 
 	int mI=0;
 	double dMax=0.0f;
-	for(int i = 0; i < ms; i ++){
+	printf("nj=%d, ms=%d\n", nj,ms);
+	printf("observingT=%f, dF=%f, dBPM=%f\n", observingT, deltaF, deltaBPM);
+	//for(int i = 0; i < ms; i ++){
+	for(int i = ms/2; i < ms; i ++){
 		float bpm;
 		if(i < ms/2){
 			bpm=(ms/2-i)*deltaBPM;
@@ -142,6 +161,7 @@ void nufft_hr(void)
 		printf("fk0=(%f,%f),fk1=(%f,%f)\n", fk0[i].r,fk0[i].i,
 			fk1[i].r,fk1[i].i);
 		printf("(%f,%f, %f)\n",cabsf_sq(fk0[i]), cabsf_sq(fk1[i]), dMax);
+
 		if( (bpm < 180.0f) && (bpm > 50.0f) && (cabsf_sq(fk1[i]) > dMax) ){
 			dMax =cabsf_sq(fk1[i]);
 			mI = i;
@@ -158,7 +178,7 @@ void nufft_sine(void)
 {
 	int ier,iflag,j,k1,ms,nj;
 	float xj[MX];
-	float eps=1e-6;
+	float eps=1e-5;
 	double err;
 	COMPLEX8 cj[MX];
 	COMPLEX8 fk0[MX],fk1[MX];
@@ -167,24 +187,33 @@ void nufft_sine(void)
 //     --------------------------------------------------
 //     create some test data
 //     --------------------------------------------------
-	ms = 32;	//oversampling 2*ms in time domain
-	nj = 48;
+	ms = 64;	//oversampling 2*ms in time domain
+	nj = 77;
 	//fortran array index from "1", but c is from "0"
+	printf("input xj, nj and cj\n");
+	printf("nj bin=%f\n", M_PI*2.0/(nj));
 	for(k1 = -nj/2; k1 <= (nj-1)/2;k1++){
 		j = k1+nj/2;
 		//xj[j] = M_PI * cos(-M_PI*(j+1)/nj);
-		xj[j] = M_PI * k1/(nj/2);
-		cj[j] = cmplxf(cos(5.0*xj[j])+cos(1.0*xj[j]),
-					   sin(2.0*xj[j]));
-		printf("%d,%d:%f, (%f,%f)\n", k1, j, xj[j], cj[j].r, cj[j].i);
-	}
+		//float r_s=M_PI*2.0/(nj*2) * ((rand()%10 - 5 )/5.0f);
+		float r_s=M_PI*2.0/(nj) * ((rand()%10 - 5.0 )/5.0f);
+		xj[j] = M_PI * k1/(nj/2) + r_s;//generate a random non-equispaced
+		//cj[j] = cmplxf(cos(5.0*xj[j])+cos(1.0*xj[j]),
+		//			   sin(2.0*xj[j]));
+		cj[j].r = cos(5.0*xj[j])+cos(1.0*xj[j]);
+		cj[j].i = sin(2.0*xj[j]);
 
-	iflag=1;	//forward
+		printf("%d,%d:%f, %f,(%f,%f)\n", k1, j, r_s, xj[j], cj[j].r, cj[j].i);
+	}
+	printf("dirft1d1f_\n");
+	iflag=-1;	//forward
 	dirft1d1f_(&nj, xj, cj, &iflag, &ms, fk0);
-	iflag=1;	//forward
+	printf("nufft1d1ff90_ffte_\n");
+	iflag=-1;	//forward
 	nufft1d1ff90_ffte_(&nj, xj, cj, &iflag, &eps, &ms, fk1, &ier);
 	errcompf(fk0, fk1, ms, &err);
-	printf("ier=%d, err=%f\n", ier, err);
+	printf("ier=%d, err=%e\n\n", ier, err);
+	printf("nj=%d, ms=%d\n",nj,ms);
 	for(int i = 0; i < ms; i ++){
 		printf("%d:fk0=(%f,%f),fk1=(%f,%f)\n", i, fk0[i].r,fk0[i].i,
 			fk1[i].r,fk1[i].i);
@@ -194,6 +223,7 @@ void nufft_sine(void)
 
 int main(int argc, char **argv)
 {
-	nufft_sine();
+	srand(time(NULL));
+	//nufft_sine();
 	nufft_hr();
 }

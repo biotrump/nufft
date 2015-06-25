@@ -11,6 +11,9 @@ typedef struct _complex16{
 	double i;
 }COMPLEX16, *PCOMPLEX16;
 
+//return the number next base which is 2^p*3^q*5^r, (p,q,r>=0)
+int next235_(double *base);
+
 /*
  * single precision, float,
  *
