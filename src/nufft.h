@@ -1,6 +1,7 @@
 #ifndef _H_NUFFT_H
 #define	_H_NUFFT_H
 
+#ifndef _H_BCV_BASE_TYPE_H
 typedef struct _complex8{
 	float r;
 	float i;
@@ -10,6 +11,7 @@ typedef struct _complex16{
 	double r;
 	double i;
 }COMPLEX16, *PCOMPLEX16;
+#endif
 
 //return the number next base which is 2^p*3^q*5^r, (p,q,r>=0)
 int next235_(double *base);
