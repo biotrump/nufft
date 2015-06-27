@@ -118,6 +118,14 @@ else(NUFFT_F90)
 endif(NUFFT_F90)
 endif()
 
+find_package (Threads REQUIRED)
+message("CMAKE_THREAD_LIBS_INIT : ${CMAKE_THREAD_LIBS_INIT}")
+#message("Threads_INCLUDES  :" ${Threads_INCLUDES})
+#message("Threads_LIBRARIES :" ${Threads_LIBRARIES})
+#message("Threads_LIBS :" ${Threads_LIBS})
+#if (Threads_FOUND)
+#endif (Threads_FOUND)
+
 #add_nufft_test(nufft1d_demof90-ffte nufft1d_demof90.f)
 add_executable(nufft1d_demof90-ffte nufft1d_demof90-ffte.f)
 target_link_libraries(nufft1d_demof90-ffte
@@ -140,3 +148,10 @@ add_executable(nufft1df-hr nufft1df-hr.c)
 target_link_libraries(nufft1df-hr
 	nufft
 	${FFTELIB} )
+
+add_executable(reentrant-pthread-test reentrant-pthread-test.c)
+target_link_libraries(reentrant-pthread-test
+	nufft
+	${FFTELIB}
+	${CMAKE_THREAD_LIBS_INIT}
+	)
