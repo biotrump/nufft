@@ -27,7 +27,7 @@ c     --------------------------------------------------
          j = k1+nj/2+1
          xj(j) = pi * cos(-pi*j/nj)
          cj(j) = cmplx( sin(pi*j/nj), cos(pi*j/nj))
-         print*,xj(j),cj(j)
+c         print*,xj(j),cj(j)
       enddo
 c
 c     --------------------------------------------------
@@ -55,6 +55,7 @@ c     -----------------------
 c     call 1D Type1 method
 c     -----------------------
 c
+		iflag = -1
          call dirft1d1f(nj,xj,cj,iflag, ms,fk0)
          call nufft1d1ff90_ffte(nj,xj,cj,iflag,eps, ms,fk1,ier)
          call errcompf(fk0,fk1,ms,err)
@@ -102,9 +103,9 @@ c
       do k = 1, n
          ealg = ealg + REAL(cabs(fk1(k)-fk0(k)))**2
          salg = salg + REAL(cabs(fk0(k)))**2
-         print *,fk1(k),fk0(k)
+C         print *,fk1(k),fk0(k)
       enddo
-      print *,'ealg,salg:',ealg,salg
+C      print *,'ealg,salg:',ealg,salg
       err =sqrt(ealg/salg)
       return
       end

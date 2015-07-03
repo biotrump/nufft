@@ -187,8 +187,8 @@ c     ---------------------------------------------------------------
          fw(iw1+k1) = exp(-t1*k1**2)
       enddo
       call dcffti(nf1,fw(iwsav))
-	WRITE(6,*) "dcffti",nf1,iwsav
-	CALL		DUMP(fw(iwsav), nf1)
+C	WRITE(6,*) "dcffti",nf1,iwsav
+C	CALL		DUMP(fw(iwsav), nf1)
 c
 c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
@@ -263,12 +263,12 @@ c     ---------------------------------------------------------------
 c
       if (iflag .ge. 0) then
          call dcfftb(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) "dcfftb",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) "dcfftb",nf1,iwsav
+C		CALL		DUMP(fw(0), nf1)
       else
          call dcfftf(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) "dcfftf",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) "dcfftf",nf1,iwsav
+C		CALL		DUMP(fw(0), nf1)
       endif
 c
       tau = pi * r2lamb / dble(nf1)**2
@@ -401,8 +401,8 @@ c     ---------------------------------------------------------------
          fw(iw1+k1) = exp(-t1*k1**2)
       enddo
       call dcffti(nf1,fw(iwsav))
-	WRITE(6,*) ">dcffti",nf1,iwsav
-	CALL		DUMP(fw(iwsav), nf1)
+C	WRITE(6,*) ">dcffti",nf1,iwsav
+C	CALL		DUMP(fw(iwsav), nf1)
 c
 c     ---------------------------------------------------------------
 c     Deconvolve and compute inverse 1D FFT
@@ -437,12 +437,12 @@ c
 c
       if (iflag .ge. 0) then
          call dcfftb(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) ">dcfftb",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) ">dcfftb",nf1,iwsav
+C		CALL		DUMP(fw(0), nf1)
       else
          call dcfftf(nf1,fw(0),fw(iwsav))
-		WRITE(6,*) ">dcfftf",nf1,iwsav
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) ">dcfftf",nf1,iwsav
+C		CALL		DUMP(fw(0), nf1)
       endif
 c
 c     ---------------------------------------------------------------
@@ -643,8 +643,8 @@ c
       enddo
 c
       call dcffti(nf1,fw(iwsave))
-		WRITE(6,*) ">>dcffti",nf1,iwsave
-		CALL		DUMP(fw(iwsave), nf1)
+C		WRITE(6,*) ">>dcffti",nf1,iwsave
+C		CALL		DUMP(fw(iwsave), nf1)
 c
 c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
@@ -715,12 +715,12 @@ c
 c
       if (iflag .ge. 0) then
          call dcfftb(nf1,fw(0),fw(iwsave))
-		WRITE(6,*) ">>dcfftb",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) ">>dcfftb",nf1,iwsave
+C		CALL		DUMP(fw(0), nf1)
       else
          call dcfftf(nf1,fw(0),fw(iwsave))
-		WRITE(6,*) ">>dcfftf",nf1,iwsave
-		CALL		DUMP(fw(0), nf1)
+C		WRITE(6,*) ">>dcfftf",nf1,iwsave
+C		CALL		DUMP(fw(0), nf1)
       endif
       do k1 = 1, kmax+nspread, 2
          fw(nf1+2*k1) = -fw(nf1+2*k1)
