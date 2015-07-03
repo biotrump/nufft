@@ -149,6 +149,11 @@ target_link_libraries(nufft1df-hr
 	nufft
 	${FFTELIB} )
 
+add_executable(r110_m156bpm r110_m156bpm.c)
+target_link_libraries(r110_m156bpm
+	nufft
+	${FFTELIB} )
+
 add_executable(reentrant-pthread-test reentrant-pthread-test.c)
 target_link_libraries(reentrant-pthread-test
 	nufft
