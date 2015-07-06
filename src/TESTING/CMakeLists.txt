@@ -160,3 +160,10 @@ target_link_libraries(reentrant-pthread-test
 	${FFTELIB}
 	${CMAKE_THREAD_LIBS_INIT}
 	)
+
+add_executable(nufft_verify nufft_verify.c)
+target_link_libraries(nufft_verify
+	nufft
+	${FFTELIB}
+	${CMAKE_THREAD_LIBS_INIT}
+	)
