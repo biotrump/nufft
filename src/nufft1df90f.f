@@ -24,7 +24,7 @@ c  Different applications have different needs, and we have chosen
 c  to provide the simplest code as a reasonable efficient template.
 c
 c**********************************************************************
-      subroutine nufft1d1f90(nj,xj,cj,iflag,eps,ms,fk,ier)
+      subroutine nufft1d1f90f(nj,xj,cj,iflag,eps,ms,fk,ier)
       implicit none
       integer ier,iflag,istart,iw1,iwtot,iwsav
       integer j,jb1,jb1u,jb1d,k1,ms,next235,nf1,nj,nspread
@@ -153,21 +153,21 @@ c -------------------------------
          ier = 1
          return
       endif
-      if (eps.le.1d-11) then
-         rat = 3.0d0
+      if (eps.le.1e-11) then
+         rat = 3.0e0
       else
-         rat = 2.0d0
+         rat = 2.0e0
       endif
-      nspread = int(-log(eps)/(pi*(rat-1d0)/(rat-.5d0)) + .5d0)
+      nspread = int(-log(eps)/(pi*(rat-1e0)/(rat-.5e0)) + .5e0)
       nf1 = rat*ms
       if (2*nspread.gt.nf1) then
-         nf1 = next235(2d0*nspread)
+         nf1 = next235(DBLE(2e0*nspread))
       endif
 c
 c     lambda (described above) = nspread/(rat*(rat-0.5d0))
 c     It is more convenient to define r2lamb = rat*rat*lambda
 c
-      r2lamb = rat*rat * nspread / (rat*(rat-.5d0))
+      r2lamb = rat*rat * nspread / (rat*(rat-.5e0))
       hx = 2*pi/nf1
 c
 c     -----------------------------------
@@ -195,7 +195,7 @@ c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
 c     ---------------------------------------------------------------
       do k1 = 0, 2*nf1-1
-         fw(k1) = cmplx(0d0,0d0)
+         fw(k1) = cmplx(0e0,0e0)
       enddo
 c
 c     ---------------------------------------------------------------
@@ -299,7 +299,7 @@ c
 c
 c
 ************************************************************************
-      subroutine nufft1d2f90(nj,xj,cj, iflag,eps, ms,fk,ier)
+      subroutine nufft1d2f90f(nj,xj,cj, iflag,eps, ms,fk,ier)
       implicit none
       integer ier,iflag,iw1,iwsav,iwtot,j,jb1,jb1u,jb1d,k1
       integer ms,next235,nf1,nj,nspread,nw
@@ -350,7 +350,7 @@ c     2) compute inverse FFT on uniform fine grid
 c     3) spread data to regular mesh using Gaussian
 c
 c
-c     See subroutine nufft1d1f90(nj,xj,cj,iflag,eps,ms,fk,ier)
+c     See subroutine nufft1d1f90f(nj,xj,cj,iflag,eps,ms,fk,ier)
 c     for more comments on fast gridding and parameter selection.
 c
 ************************************************************************
@@ -372,18 +372,18 @@ c     -------------------------------
          return
       endif
       if (eps.le.1d-11) then
-         rat = 3.0d0
+         rat = 3.0e0
       else
-         rat = 2.0d0
+         rat = 2.0e0
       endif
 c
-      nspread = int(-log(eps)/(pi*(rat-1d0)/(rat-.5d0)) + .5d0)
+      nspread = int(-log(eps)/(pi*(rat-1e0)/(rat-.5e0)) + .5d0)
       nf1 = rat*ms
       if (2*nspread.gt.nf1) then
-         nf1 = next235(2d0*nspread)
+         nf1 = next235(DBLE(2e0*nspread))
       endif
 c
-      r2lamb = rat*rat * nspread / (rat*(rat-.5d0))
+      r2lamb = rat*rat * nspread / (rat*(rat-.5e0))
       hx = 2*pi/nf1
 c
 c     -----------------------------------
@@ -413,7 +413,7 @@ c     (A factor of (-1)**k is needed to shift phase.)
 c     ---------------------------------------------------------------
 c
       t1 = pi * r2lamb / real(nf1)**2
-      cross1 = 1d0/sqrt(r2lamb)
+      cross1 = 1e0/sqrt(r2lamb)
       zz = cross1*fk(0)
       fw(0) = real(zz)
       fw(1) = imag(zz)
@@ -434,8 +434,8 @@ c
          fw(2*nf1-ms+1) = imag(zz)
       endif
       do k1 = (ms+1)/2, nf1-ms/2-1
-         fw(2*k1) = cmplx(0d0, 0d0)
-         fw(2*k1+1) = cmplx(0d0, 0d0)
+         fw(2*k1) = cmplx(0e0, 0e0)
+         fw(2*k1+1) = cmplx(0e0, 0e0)
       enddo
 c
 
@@ -458,20 +458,20 @@ c          locations using Gaussian convolution.
 c     ---------------------------------------------------------------
       t1 = pi/r2lamb
       do j = 1, nj
-         cj(j) = cmplx(0d0,0d0)
+         cj(j) = cmplx(0e0,0e0)
          jb1 = int((xj(j)+pi)/hx)
          diff1 = (xj(j)+pi)/hx - jb1
          jb1 = mod(jb1, nf1)
          if (jb1.lt.0) jb1=jb1+nf1
          xc(0) = exp(-t1*diff1**2)
          cross = xc(0)
-         cross1 = exp(2d0*t1 * diff1)
+         cross1 = exp(2e0*t1 * diff1)
          do k1 = 1, nspread
             cross = cross * cross1
             xc(k1) = fw(iw1+k1)*cross
          enddo
          cross = xc(0)
-         cross1 = 1d0/cross1
+         cross1 = 1e0/cross1
          do k1 = 1, nspread-1
             cross = cross * cross1
             xc(-k1) = fw(iw1+k1)*cross
@@ -502,7 +502,7 @@ c
 c
 c
 ************************************************************************
-      subroutine nufft1d3f90(nj,xj,cj, iflag,eps, nk,sk,fk,ier)
+      subroutine nufft1d3f90f(nj,xj,cj, iflag,eps, nk,sk,fk,ier)
       implicit none
       integer ier,iw1,iwsave,iwtot,j,jb1,k1,kb1,kmax,nj,iflag,nk
       integer next235,nf1,nspread
@@ -589,7 +589,7 @@ c
              t1=xj(j)
          endif
       enddo
-      xb = (t1+t2) / 2d0
+      xb = (t1+t2) / 2e0
       xm = max(t2-xb,-t1+xb)  ! max(abs(t2-xb),abs(t1-xb))
 c
       t1 = sk(1)
@@ -601,7 +601,7 @@ c
              t1=sk(k1)
          endif
       enddo
-      sb = (t1+t2) / 2d0
+      sb = (t1+t2) / 2e0
       sm = max(t2-sb,-t1+sb)
 c
 c     -------------------------------
@@ -612,9 +612,9 @@ c     nspread is number of neighbors to which Gaussian gridding is
 c     carried out.
 c     -------------------------------
       if (eps.le.1d-11) then
-         rat = sqrt(3.0d0)
+         rat = sqrt(3.0e0)
       else
-         rat = sqrt(2.0d0)
+         rat = sqrt(2.0e0)
       endif
 c
       nspread = int(-log(eps)/(pi*(rat-1d0)/(rat-.5d0)) + .5d0)
@@ -622,15 +622,15 @@ c
       nf1 = next235(rat*max(rat*t1+2*nspread,2*nspread/(rat-1)))
       rat = (sqrt(nf1*t1+nspread**2)-nspread)/t1
 c
-      r2lamb1 = rat*rat * nspread / (rat*(rat-.5d0))
+      r2lamb1 = rat*rat * nspread / (rat*(rat-.5e0))
       hx = pi/(rat*sm)
-      hs = 2d0*pi/real(nf1)/hx            ! hx hs = 2.pi/nf1
+      hs = 2e0*pi/real(nf1)/hx            ! hx hs = 2.pi/nf1
 c
 c     -------------------------------
 c     Compute workspace size and allocate
 c     -------------------------------
 c
-      kmax = int(nf1*(r2lamb1-nspread)/r2lamb1+.1d0)
+      kmax = int(nf1*(r2lamb1-nspread)/r2lamb1+.1e0)
       iw1 = 2*nf1
       iwsave = iw1 + nspread+1
       iwtot = iwsave + 16+4*nf1
@@ -655,7 +655,7 @@ c     ---------------------------------------------------------------
 c     Initialize fine grid data to zero.
 c     ---------------------------------------------------------------
       do k1 = 0, 2*nf1-1
-         fw(k1) = cmplx(0d0,0d0)
+         fw(k1) = cmplx(0e0,0e0)
       enddo
 c
 c     ---------------------------------------------------------------
@@ -672,13 +672,13 @@ c
 
          xc(0) = exp(-t1*diff1**2)
          cross = xc(0)
-         cross1 = exp(2d0*t1 * diff1)
+         cross1 = exp(2e0*t1 * diff1)
          do k1 = 1, nspread
             cross = cross * cross1
             xc(k1) = fw(iw1+k1)*cross
          enddo
          cross = xc(0)
-         cross1 = 1d0/cross1
+         cross1 = 1e0/cross1
          do k1 = 1, nspread-1
             cross = cross * cross1
             xc(-k1) = fw(iw1+k1)*cross
@@ -700,7 +700,7 @@ c             (-1)^k F_(k+M/2) = Sum (-1)^j F_(j+M/2) e(2pi ijk/M)
 c ---------------------------------------------------------------
 c
       t1 = pi * r2lamb1 / real(nf1)**2
-      cross1 = (1d0-2d0*mod(nf1/2,2))/r2lamb1
+      cross1 = (1e0-2e0*mod(nf1/2,2))/r2lamb1
       zz = cmplx(fw(nf1),fw(nf1+1))
       zz = cross1*zz
       fw(nf1) = real(zz)
@@ -747,19 +747,19 @@ c     ---------------------------------------------------------------
          ! exp(-t1*(diff1-k1)**2) = xc(k1)
          xc(0) = exp(-t1*diff1**2)
          cross = xc(0)
-         cross1 = exp(2d0*t1 * diff1)
+         cross1 = exp(2e0*t1 * diff1)
          do k1 = 1, nspread
             cross = cross * cross1
             xc(k1) = fw(iw1+k1)*cross
          enddo
          cross = xc(0)
-         cross1 = 1d0/cross1
+         cross1 = 1e0/cross1
          do k1 = 1, nspread-1
             cross = cross * cross1
             xc(-k1) = fw(iw1+k1)*cross
          enddo
 c
-         fk(j) = cmplx(0d0,0d0)
+         fk(j) = cmplx(0e0,0e0)
          do k1 = -nspread+1, nspread
 	    zz = cmplx(fw(2*(kb1+k1)),fw(2*(kb1+k1)+1))
             fk(j) = fk(j) + xc(k1)*zz
@@ -767,7 +767,7 @@ c
       enddo
 c
       if (iflag .lt. 0) xb = -xb
-      t1 = r2lamb1/(4d0*pi) * hx**2
+      t1 = r2lamb1/(4e0*pi) * hx**2
       do j = 1, nk
          fk(j) = (exp(t1*(sk(j)-sb)**2))*fk(j)
          ang = (sk(j)-sb)*xb

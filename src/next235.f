@@ -1,4 +1,24 @@
 ************************************************************************
+C engine of fft
+	MODULE NUFFTModule
+		implicit none
+C constant
+		INTEGER, PARAMETER :: E_FFTE = 0, E_FFTS = 1, E_FFTW = 2
+		INTEGER :: ffte=E_FFTE
+	END MODULE NUFFTModule
+C setup fft engine type
+C default is ffte
+	subroutine nufft_ffte(id)
+		USE NUFFTModule
+		implicit none
+		INTEGER id
+		if ((id.le.E_FFTW).and.(id.ge.E_FFTE) ) then
+			ffte=id
+		else
+			ffte=E_FFTE
+		endif
+	end
+
       function next235(base)
       implicit none
       integer next235, numdiv

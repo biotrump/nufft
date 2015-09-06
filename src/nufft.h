@@ -13,9 +13,17 @@ typedef struct _complex16{
 }COMPLEX16, *PCOMPLEX16;
 #endif
 
+/*fft engine for NUFFT
+ *
+ */
+#define	ENG_FFTE	(0)
+#define	ENG_FFTS	(1)
+#define	ENG_FFTW	(2)
+
 //return the number next base which is 2^p*3^q*5^r, (p,q,r>=0)
 int next235_(double *base);
-
+//setup fft engine type
+void nufft_ffte(int *id);
 /*
  * single precision, float,
  *
