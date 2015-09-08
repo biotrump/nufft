@@ -22,58 +22,73 @@ c     rather than the state of the art FFTW package (www.fftw.org).
 c
 c  Different applications have different needs, and we have chosen
 c  to provide the simplest code as a reasonable efficient template.
-c
+C
+C	!!!!!!!!!!!
+C	F90 calls C :
+c	http://docs.oracle.com/cd/E19059-01/stud.8/817-5066/11_cfort.html
 c**********************************************************************
       subroutine nufft1d1ff90_ffte(nj,xj,cj,iflag,eps,ms,fk,ier)
+C		use moudle to load global vars
       USE NUFFTModule
-C		TYPE(C_PTR) needs "ISO_C_BINDING"
-      USE ISO_C_BINDING
+C	TYPE(C_PTR), i.e., "void *", variable needs "ISO_C_BINDING" to define the TYPE(C_PTR)
+      USE , intrinsic ::ISO_C_BINDING
       implicit none
-C	TYPE(C_PTR)==> (void *)
+
 		interface
-
-C		ffts_plan_t *ffts_init_1d_real(size_t n, int sign);
-		function ffts_init_1d_realf ( n, sign ) bind ( c )
-			use iso_c_binding
-			integer ( c_int ) :: n
+C		fortran always uses call-by-address, so it passes pointers, not value to c functions.
+C		ffts_plan_t *ffts_init_1d(size_t n, int sign);
+C 		size_t for 64 bits platform is 8 bytes, fortran uses "call-by-addr",
+C		so wrong size passing corrupts the memory
+		function ffts_init_1df ( n, sign ) result(ptr) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			TYPE(C_PTR) 	:: ptr
+			integer ( c_long ) :: n
 			integer ( c_int ) :: sign
-			TYPE(C_PTR) 	:: ffts_init_1d_realf
-C			integer, pointer ::ffts_init_1d_realf
-		end function ffts_init_1d_realf
+		end function ffts_init_1df
 
-C		void ffts_execute (ffts_plan_t *p , const void *input, void *output )
-		function ffts_execute (p , input, output ) bind ( c )
-			use iso_c_binding
-			TYPE(C_PTR) :: p
-			REAL(C_FLOAT) :: input
-			REAL(C_FLOAT) :: output
-		end function ffts_execute
+C		void ffts_execute (ffts_plan_t *plan , const void *input, void *output )
+		subroutine ffts_executef (plan , input, output ) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			TYPE(C_PTR) :: plan
+			REAL(C_FLOAT) :: input(*)
+			REAL(C_FLOAT) :: output(*)
+		end subroutine ffts_executef
 
-C		void ffts_free(ffts_plan_t *p);
-		function ffts_free ( p ) bind ( c )
-			use iso_c_binding
-			TYPE(C_PTR) :: p
-		end function ffts_free
+C		void ffts_free(ffts_plan_t *plan);
+		subroutine ffts_freef ( plan ) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			TYPE(C_PTR) :: plan
+		end subroutine ffts_freef
 
-C		unsigned find_best_N_pow2f(unsigned *n);the nearest power of 2 next to n
-		function find_best_N_pow2f (n ) bind ( c )
-			use iso_c_binding
-			integer ( c_int ) :: n
-			integer ( c_int ) :: find_best_N_pow2f
-		end function find_best_N_pow2f
+C		unsigned find_best_pow2f(size_t *n);the nearest power of 2 next to n
+		function find_best_pow2f ( n ) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			integer ( c_long ) :: n
+			integer ( c_int ) :: find_best_pow2f
+		end function find_best_pow2f
 		end interface
+C	special vars passed to c functions
+C	https://people.sc.fsu.edu/~jburkardt/f_src/f90_calls_c/f90_calls_c.html
+		integer (c_int) :: iflag
+		integer (c_long) :: nf1
 
-      integer ier,iflag,istart,iw1,iwtot,iwsav
-      integer j,jb1,jb1u,jb1d,k1,ms,next235,nf1,nj,nspread
+      integer ier,istart,iw1,iwtot,iwsav
+      integer j,jb1,jb1u,jb1d,k1,ms,next235,nj,nspread
       real*4 cross,cross1,diff1,eps,hx,pi,rat,r2lamb,t1,tau
       real*4 xc(-147:147),xj(nj)
       parameter (pi=3.141592653589793238462e0)
       complex*8 cj(nj),fk(-ms/2:(ms-1)/2),zz,ccj
 C 		void *
       TYPE(C_PTR) :: fftp
+
 c ----------------------------------------------------------------------
 C variable size 1-D real*4 arrary: fw[]
-      real*4, allocatable :: fw(:)
+      real*4, allocatable, target :: fw(:)
+!dir$ attributes align:64
 c ----------------------------------------------------------------------
 c     if (iflag .ge. 0) then
 c
@@ -203,10 +218,13 @@ c -------------------------------
       if (2*nspread.gt.nf1) then
          nf1 = next235(DBLE(2e0*nspread))
       endif
+
 C	ffts supports only radix2
+C	WRITE(6,*) ">> nf1=",nf1
 	if(ffte .eq. E_FFTS) then
-		nf1=find_best_N_pow2f(nf1)
+		nf1=find_best_pow2f(nf1)
 	endif
+C	WRITE(6,*) "<< nf1=",nf1
 
 c
 c     lambda (described above) = nspread/(rat*(rat-0.5d0))
@@ -220,13 +238,18 @@ c     Compute workspace size and allocate
 c     -----------------------------------
       iw1 = 2*nf1
       iwsav = iw1+nspread+1
-	if(ffte .eq. E_FFTS) then
-C	ffts has its own workspace, but it needs input/output buffer
-	iwtot = iwsav+2*nf1+15
-	else
-C	ffte needs this extra space
+C	iwsav should be 16 bytes aligned
+      if(mod(iwsav,16).ne.0) then
+		iwsav = iwsav + 16 - mod(iwsav,16)
+      endif
+C	if(ffte .eq. E_FFTS) then
+CC	ffts has its own workspace, but it needs input/output buffer
+C		iwtot = iwsav+2*nf1+15
+C	else
+CC	ffte needs this extra space
       iwtot = iwsav+4*nf1+15
-	endif
+C	endif
+
 C allocate size "0 to iwtot", 1-D real*4 arrary: fw[0:iwtot]
       allocate ( fw(0:iwtot) )
 c
@@ -243,20 +266,18 @@ C Thomas init : CALL ZFFT1F(fw(0), nf1, 0, fw(iwsav))
 C Thomas dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, 1, fw(iwsav))
 C Thomas dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -1, 0 8zvgfkk3[r(iwsav))
 C
-	if(ffte .eq. E_FFTE) then
-C	FFTE
-		CALL		ZFFT1F(fw(0), nf1, 0, fw(iwsav))
-	else if(ffte .eq. E_FFTS) then
+	if(ffte .eq. E_FFTS) then
 C	FFTS
 C	iflag, < 0, forward, >=0 back
-		fftp = ffts_init_1d_realf(nf1, iflag)
-C	ffts_execute(fftp, input, output);//output=[real, imaginary, real, imaginary ... interleaving format]
-C		ffts_free(fftp);
+		fftp = ffts_init_1df(nf1, iflag)
+	else if(ffte .eq. E_FFTE) then
+C	FFTE
+		CALL		ZFFT1F(fw(0), nf1, 0, fw(iwsav))
 	else
-C	FFTW
-C		call dcffti(nf1,fw(iwsav))
+C	netlib fftpack
+		call dcffti(nf1,fw(iwsav))
 	endif
-C	WRITE(6,*) "Type 1 : ZFFT1F 0",nf1,iwsav
+	WRITE(6,*) "NUFFT type1: init fftp=",fftp, nf1,iwsav,iflag
 C	CALL		DUMPF(fw(iwsav), nf1)
 
 c
@@ -335,26 +356,33 @@ c
 C Thomas init : CALL ZFFT1F(fw(0), nf1, 0, fw(iwsav))
 C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, 1, fw(iwsav))
 C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -1, fw(iwsav))
-		if(ffte .eq. E_FFTS) then
+
+	if(ffte .eq. E_FFTS) then
 C	output=[real, imaginary, real, imaginary ... interleaving format]
-			ffts_execute(fftp, input, output)
-			ffts_free(fftp)
-		else if (iflag .ge. 0) then
+		call ffts_executef(fftp, fw, fw(iwsav) )
+C	copy the output buffer back to the input buffer
+C	output : complex, complex.... => real,image,real,image....
+C	memcpy(fw(0), fw(iwsav), 2*nf1)
+		fw(0:2*nf1-1) = fw(iwsav:iwsav+2*nf1-1)
+		call ffts_freef(fftp)
+	else
+		if (iflag .ge. 0) then
 			if(ffte .eq. E_FFTE) then
 				CALL		ZFFT1F(fw(0), nf1, 1, fw(iwsav))
 			else
-C         		call dcfftb(nf1,fw(0),fw(iwsav))
+				call dcfftb(nf1,fw(0),fw(iwsav))
 			endif
-C		WRITE(6,*) "type 1 :ZFFT1F 1",nf1,iwsav
-C		CALL		DUMPF(fw(0), nf1)
-      else
+		else
 			if(ffte .eq. E_FFTE) then
 				CALL		ZFFT1F(fw(0), nf1, -1, fw(iwsav))
-C         		call dcfftf(nf1,fw(0),fw(iwsav))
+			else
+				call dcfftf(nf1,fw(0),fw(iwsav))
 			endif
-C		WRITE(6,*) "type 1 :ZFFT1F -1",nf1,iwsav
+		endif
+	endif
+	WRITE(6,*) "NUFFT type1:",nf1,iwsav
 C		CALL		DUMPF(fw(0), nf1)
-      endif
+
 c
       tau = pi * r2lamb / real(nf1)**2
       cross1 = 1e0/sqrt(r2lamb)
@@ -383,17 +411,67 @@ c
 c
 ************************************************************************
       subroutine nufft1d2ff90_ffte(nj,xj,cj, iflag,eps, ms,fk,ier)
+C		use moudle to load global vars
       USE NUFFTModule
+C	TYPE(C_PTR), i.e., "void *", variable needs "ISO_C_BINDING" to define the TYPE(C_PTR)
+      USE , intrinsic ::ISO_C_BINDING
       implicit none
-      integer ier,iflag,iw1,iwsav,iwtot,j,jb1,jb1u,jb1d,k1
-      integer ms,next235,nf1,nj,nspread,nw
+
+		interface
+C		fortran always uses call-by-address, so it passes pointers, not value to c functions.
+C		ffts_plan_t *ffts_init_1d(size_t n, int sign);
+C 		size_t for 64 bits platform is 8 bytes, fortran uses "call-by-addr",
+C		so wrong size passing corrupts the memory
+		function ffts_init_1df ( n, sign ) result(ptr) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			TYPE(C_PTR) 	:: ptr
+			integer ( c_long ) :: n
+			integer ( c_int ) :: sign
+		end function ffts_init_1df
+
+C		void ffts_execute (ffts_plan_t *plan , const void *input, void *output )
+		subroutine ffts_executef (plan , input, output ) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			TYPE(C_PTR) :: plan
+			REAL(C_FLOAT) :: input(*)
+			REAL(C_FLOAT) :: output(*)
+		end subroutine ffts_executef
+
+C		void ffts_free(ffts_plan_t *plan);
+		subroutine ffts_freef ( plan ) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			TYPE(C_PTR) :: plan
+		end subroutine ffts_freef
+
+C		unsigned find_best_pow2f(size_t *n);the nearest power of 2 next to n
+		function find_best_pow2f ( n ) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			integer ( c_long ) :: n
+			integer ( c_int ) :: find_best_pow2f
+		end function find_best_pow2f
+		end interface
+C	special vars passed to c functions
+C	https://people.sc.fsu.edu/~jburkardt/f_src/f90_calls_c/f90_calls_c.html
+		integer (c_int) :: iflag
+		integer (c_long) :: nf1
+
+      integer ier,iw1,iwsav,iwtot,j,jb1,jb1u,jb1d,k1
+      integer ms,next235,nj,nspread,nw
       real*4 cross,cross1,diff1,eps,hx,pi,rat,r2lamb,t1
       real*4 xj(nj),xc(-147:147)
       parameter (pi=3.141592653589793238462643383279502884197e0)
       complex*8 cj(nj), fk(-ms/2:(ms-1)/2)
       complex*8 zz
+C 		void *
+      TYPE(C_PTR) :: fftp
+
 c ----------------------------------------------------------------------
       real*4, allocatable :: fw(:)
+!dir$ attributes align:64
 c ----------------------------------------------------------------------
 c     if (iflag .ge. 0) then
 c
@@ -466,6 +544,12 @@ c
       if (2*nspread.gt.nf1) then
          nf1 = next235(DBLE(2e0*nspread))
       endif
+
+C	ffts supports only radix2
+	if(ffte .eq. E_FFTS) then
+		nf1=find_best_pow2f(nf1)
+	endif
+
 c
       r2lamb = rat*rat * nspread / (rat*(rat-.5e0))
       hx = 2*pi/nf1
@@ -475,7 +559,18 @@ c     Compute workspace size and allocate
 c     -----------------------------------
       iw1 = 2*nf1
       iwsav = iw1 + nspread+1
-      iwtot = iwsav + 4*nf1 + 15
+C	iwsav should be 16 bytes aligned
+      if(mod(iwsav,16).ne.0) then
+		iwsav = iwsav + 16 - mod(iwsav,16)
+      endif
+	if(ffte .eq. E_FFTS) then
+C	ffts has its own workspace, but it needs input/output buffer
+		iwtot = iwsav+2*nf1+15
+	else
+C	ffte needs this extra space
+      iwtot = iwsav+4*nf1+15
+	endif
+
       allocate ( fw(0:iwtot))
 c
 c     ---------------------------------------------------------------
@@ -491,21 +586,18 @@ C Thomas init : CALL ZFFT1F(fw(0), nf1, 0, fw(iwsav))
 C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, 1, fw(iwsav))
 C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -1, fw(iwsav))
 
-	if(ffte .eq. E_FFTE) then
+	if(ffte .eq. E_FFTS) then
+C	FFTS
+C	iflag, < 0, forward, >=0 back
+		fftp = ffts_init_1df(nf1, iflag)
+	else if(ffte .eq. E_FFTE) then
 C	FFTE
 		CALL		ZFFT1F(fw(0), nf1, 0, fw(iwsav))
-	else if(ffte .eq. E_FFTS) then
-C	FFTS
-C	CALL		ffts_plan_t *p = ffts_init_1d_real(newN, sign);
-C	ffts_execute(p, input, output);//output=[real, imaginary, real, imaginary ... interleaving format]
-C		ffts_free(p);
 	else
-C	FFTW
-C		call dcffti(nf1,fw(iwsav))
+C	netlib fftpack
+		call dcffti(nf1,fw(iwsav))
 	endif
-
-C	WRITE(6,*) ">ZFFT1F 0",nf1,iwsav
-C	CALL		DUMPF(fw(0), nf1)
+	WRITE(6,*) "NUFFT type2: init fftp=",fftp, nf1,iwsav,iflag
 
 c
 c     ---------------------------------------------------------------
@@ -544,25 +636,31 @@ C Thomas init : CALL ZFFT1F(fw(0), nf1, 0, fw(iwsav))
 C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, 1, fw(iwsav))
 C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsav)) ==> CALL ZFFT1F(fw(0), nf1, -1, fw(iwsav))
 
-      if (iflag .ge. 0) then
+	if(ffte .eq. E_FFTS) then
+C	output=[real, imaginary, real, imaginary ... interleaving format]
+		call ffts_executef(fftp, fw(0), fw(iwsav))
+C	copy the output buffer back to the input buffer
+C	output : complex, complex.... => real,image,real,image....
+C	memcpy(fw(0), fw(iwsav), 2*nf1)
+		fw(0:2*nf1-1) = fw(iwsav:iwsav+2*nf1-1)
+		call ffts_freef(fftp)
+	else
+		if (iflag .ge. 0) then
 			if(ffte .eq. E_FFTE) then
 				CALL		ZFFT1F(fw(0), nf1, 1, fw(iwsav))
-			else if(ffte .eq. E_FFTS) then
 			else
-C         		call dcfftb(nf1,fw(0),fw(iwsav))
+				call dcfftb(nf1,fw(0),fw(iwsav))
 			endif
-C		WRITE(6,*) ">ZFFT1F 1",nf1,iwsav
-C		CALL		DUMPF(fw(0), nf1)
-      else
+		else
 			if(ffte .eq. E_FFTE) then
 				CALL		ZFFT1F(fw(0), nf1, -1, fw(iwsav))
-			else if(ffte .eq. E_FFTS) then
 			else
-C         		call dcfftf(nf1,fw(0),fw(iwsav))
+				call 	dcfftf(nf1,fw(0),fw(iwsav))
 			endif
-C		WRITE(6,*) ">ZFFT1F -1",nf1,iwsav
+		endif
+	endif
+	WRITE(6,*) "NUFFT type 2:",nf1,iwsav
 C		CALL		DUMPF(fw(0), nf1)
-      endif
 
 c
 c     ---------------------------------------------------------------
@@ -619,19 +717,68 @@ c
 c
 ************************************************************************
       subroutine nufft1d3ff90_ffte(nj,xj,cj, iflag,eps, nk,sk,fk,ier)
+C		use moudle to load global vars
       USE NUFFTModule
+C	TYPE(C_PTR), i.e., "void *", variable needs "ISO_C_BINDING" to define the TYPE(C_PTR)
+      USE , intrinsic ::ISO_C_BINDING
       implicit none
-      integer ier,iw1,iwsave,iwtot,j,jb1,k1,kb1,kmax,nj,iflag,nk
-      integer next235,nf1,nspread
+
+		interface
+C		fortran always uses call-by-address, so it passes pointers, not value to c functions.
+C		ffts_plan_t *ffts_init_1d(size_t n, int sign);
+C 		size_t for 64 bits platform is 8 bytes, fortran uses "call-by-addr",
+C		so wrong size passing corrupts the memory
+		function ffts_init_1df ( n, sign ) result(ptr) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			TYPE(C_PTR) 	:: ptr
+			integer ( c_long ) :: n
+			integer ( c_int ) :: sign
+		end function ffts_init_1df
+
+C		void ffts_execute (ffts_plan_t *plan , const void *input, void *output )
+		subroutine ffts_executef (plan , input, output ) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			TYPE(C_PTR) :: plan
+			REAL(C_FLOAT) :: input(*)
+			REAL(C_FLOAT) :: output(*)
+		end subroutine ffts_executef
+
+C		void ffts_free(ffts_plan_t *plan);
+		subroutine ffts_freef ( plan ) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			TYPE(C_PTR) :: plan
+		end subroutine ffts_freef
+
+C		unsigned find_best_pow2f(size_t *n);the nearest power of 2 next to n
+		function find_best_pow2f ( n ) bind ( c )
+			use, intrinsic :: iso_c_binding
+			implicit none
+			integer ( c_long ) :: n
+			integer ( c_int ) :: find_best_pow2f
+		end function find_best_pow2f
+		end interface
+C	special vars passed to c functions
+C	https://people.sc.fsu.edu/~jburkardt/f_src/f90_calls_c/f90_calls_c.html
+		integer (c_int) :: iflag
+		integer (c_long) :: nf1
+
+      integer ier,iw1,iwsave,iwtot,j,jb1,k1,kb1,kmax,nj,nk
+      integer next235,nspread
       real*4 ang,cross,cross1,diff1,eps,hx,hs,rat,pi,r2lamb1
       real*4 sm,sb,t1,t2,xm,xb,max_t,nf1_t
       real*4 xc(-147:147), xj(nj), sk(nk)
       parameter (pi=3.14159265358979323846e0)
       complex*8 cj(nj), fk(nk), zz, cs
-c
+C 		void *
+      TYPE(C_PTR) :: fftp
+
 c ----------------------------------------------------------------------
       integer nw, istart
       real*4, allocatable :: fw(:)
+!dir$ attributes align:64
 c ----------------------------------------------------------------------
 c     if (iflag .ge. 0) then
 c
@@ -741,7 +888,10 @@ C      WRITE(6,*) "rat=",rat, "t1=", t1, "nspread=", nspread
 C      WRITE(6,*) "max=", max(rat*t1+2*nspread,2*nspread/(rat-1))
 
       nf1 = next235(DBLE(rat*max(rat*t1+2*nspread,2*nspread/(rat-1))))
-
+C	ffts supports only radix2
+	if(ffte .eq. E_FFTS) then
+		nf1=find_best_pow2f(nf1)
+	endif
 C      WRITE(6,*) "nf1=", nf1
 
       rat = (sqrt(nf1*t1+nspread**2)-nspread)/t1
@@ -757,8 +907,20 @@ c
       kmax = int(nf1*(r2lamb1-nspread)/r2lamb1+.1e0)
       iw1 = 2*nf1
       iwsave = iw1 + nspread+1
-      iwtot = iwsave + 16+4*nf1
-      allocate ( fw(0:iwtot-1) )
+C	iwsav should be 16 bytes aligned
+      if(mod(iwsave,16).ne.0) then
+		iwsave = iwsave + 16 - mod(iwsave,16)
+      endif
+	if(ffte .eq. E_FFTS) then
+C	ffts has its own workspace, but it needs input/output buffer
+		iwtot = iwsave + 16+2*nf1
+	else
+C	ffte needs this extra space
+        iwtot = iwsave + 16+4*nf1
+	endif
+
+C      allocate ( fw(0:iwtot-1) )
+      allocate ( fw(0:iwtot) )
 c
 c     ---------------------------------------------------------------
 c     Precompute spreading constants and initialize fw
@@ -775,19 +937,18 @@ C Thomas init : CALL ZFFT1F(fw(0), nf1, 0, fw(iwsave))
 C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsave)) ==> CALL ZFFT1F(fw(0), nf1, 1, fw(iwsave))
 C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsave)) ==> CALL ZFFT1F(fw(0), nf1, -1, fw(iwsave))
 
-	if(ffte .eq. E_FFTE) then
+	if(ffte .eq. E_FFTS) then
+C	FFTS
+C	iflag, < 0, forward, >=0 back
+		fftp = ffts_init_1df(nf1, iflag)
+	else if(ffte .eq. E_FFTE) then
 C	FFTE
 		CALL		ZFFT1F(fw(0), nf1, 0, fw(iwsave))
-	else if(ffte .eq. E_FFTS) then
-C	FFTS
-C	CALL		ffts_plan_t *p = ffts_init_1d_real(newN, sign);
-C	ffts_execute(p, input, output);//output=[real, imaginary, real, imaginary ... interleaving format]
-C		ffts_free(p);
 	else
-C	FFTW
-C		call dcffti(nf1,fw(iwsave))
+C	netlib fftpack
+		call dcffti(nf1,fw(iwsave))
 	endif
-C		WRITE(6,*) ">>ZFFT1F 0",nf1,iwsave
+	WRITE(6,*) "NUFFT type3: init fftp=",fftp, nf1,iwsave,iflag
 C		CALL		DUMPF(fw(0), nf1)
 
 c
@@ -863,25 +1024,30 @@ C Thomas init : CALL ZFFT1F(fw(0), nf1, 0, fw(iwsave))
 C Thomas backward/inverse FFT : dcfftb(nf1,fw(0),fw(iwsave)) ==> CALL ZFFT1F(fw(0), nf1, 1, fw(iwsave))
 C Thomas forward FFT : dcfftf(nf1,fw(0),fw(iwsave)) ==> CALL ZFFT1F(fw(0), nf1, -1, fw(iwsave))
 
-      if (iflag .ge. 0) then
+	if(ffte .eq. E_FFTS) then
+C	output=[real, imaginary, real, imaginary ... interleaving format]
+		call ffts_executef(fftp, fw(0), fw(iwsave))
+C	copy the output buffer back to the input buffer
+C	output : complex, complex.... => real,image,real,image....
+C	memcpy(fw(0), fw(iwsave), 2*nf1)
+		fw(0:2*nf1-1) = fw(iwsave:iwsave+2*nf1-1)
+		call ffts_freef(fftp)
+	else
+		if (iflag .ge. 0) then
 			if(ffte .eq. E_FFTE) then
 				CALL		ZFFT1F(fw(0), nf1, 1, fw(iwsave))
-			else if(ffte .eq. E_FFTS) then
 			else
-C         		call dcfftb(nf1,fw(0),fw(iwsave))
+				call dcfftb(nf1,fw(0),fw(iwsave))
 			endif
-C		WRITE(6,*) "type 1 :ZFFT1F 1",nf1,iwsave
-C		CALL		DUMPF(fw(0), nf1)
-      else
+		else
 			if(ffte .eq. E_FFTE) then
 				CALL		ZFFT1F(fw(0), nf1, -1, fw(iwsave))
-			else if(ffte .eq. E_FFTS) then
 			else
-C         		call dcfftf(nf1,fw(0),fw(iwsave))
+				call dcfftf(nf1,fw(0),fw(iwsave))
 			endif
-C		WRITE(6,*) "type 1 :ZFFT1F -1",nf1,iwsave
-C		CALL		DUMPF(fw(0), nf1)
-      endif
+		endif
+	endif
+	WRITE(6,*) "NUFFT type3:",nf1,iwsave
 
       do k1 = 1, kmax+nspread, 2
          fw(nf1+2*k1) = -fw(nf1+2*k1)

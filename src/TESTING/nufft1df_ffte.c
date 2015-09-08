@@ -116,8 +116,13 @@ int main(int argc, char **argv)
 //    1D Type1 method
 //     -----------------------
 //
+		int id=ENG_FFTS;
+		nufft_ffte_(&id);
+		printf("init fft engine of nufft to %d\n", id);
+
         dirft1d1f_(&nj, xj, cj, &iflag, &ms, fk0);
         nufft1d1ff90_ffte_(&nj, xj, cj, &iflag, &eps, &ms, fk1, &ier);
+		printf("sadfasdfdsafdas\n");
         errcompf(fk0, fk1, ms, &err);
         printf(" ier = %d  type 1 error = %E\n", ier, err);
 

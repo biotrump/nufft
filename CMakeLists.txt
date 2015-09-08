@@ -56,7 +56,23 @@ else(ANDROID_NDK)
 	message ("*** Fortran compiler DEBUG FLAGS: " ${CMAKE_Fortran_FLAGS_DEBUG})
 endif(ANDROID_NDK)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fPIC -D_POSIX_C_SOURCE=200112L")
+# default build type is Debug which means no optimization
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif(NOT CMAKE_BUILD_TYPE)
+
+if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+  add_definitions(-DDEBUG)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fPIC")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -g -O0 -fPIC -D_POSIX_C_SOURCE=200112L")
+else()
+  add_definitions(-DARMA_NO_DEBUG)
+  add_definitions(-DNDEBUG)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -O3 -fPIC -D_POSIX_C_SOURCE=200112L")
+endif()
+
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fPIC -D_POSIX_C_SOURCE=200112L")
 
 # Get Python
 IF(WIN32 AND NOT UNIX)
@@ -145,51 +161,42 @@ find_library (FFTELIB
 endif()
 message("**FFTELIB=${FFTELIB} ")
 # --------------------------------------------------
+#find ffts
+message("FFTS_DIR=${FFTS_DIR}")
+find_path(FFTS_INC ffts.h
+			HINTS ${FFTS_DIR}/include )
+message("FFTS_INC=${FFTS_INC}" )
+if(FFTS_INC)
+	include_directories("${FFTS_INC}")
+endif(FFTS_INC)
+
+message("FFTE_OUT=${FFTE_OUT} ")
+if(ANDROID_NDK)
+find_library (FFTSLIB
+			NAMES ${FFTS_LIB_NAME}
+			PATHS ${FFTS_OUT}
+			PATH_SUFFIXES lib
+			NO_DEFAULT_PATH)
+else()
+find_library (FFTSLIB
+			NAMES ${FFTS_LIB_NAME}
+			PATHS ${FFTS_OUT}
+			PATH_SUFFIXES lib
+			NO_DEFAULT_PATH)
+endif()
+message("**FFTSLIB=${FFTSLIB} ")
+# --------------------------------------------------
+# build default fft if there is no better fft is provided
+message(STATUS "building supplied NETLIB fftpack implementation")
+set( FFTNETLIB fftbase )
+add_subdirectory(src/fftpack)
+
+# --------------------------------------------------
 if(ANDROID_NDK)
 	set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY )
 	set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
 	set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
 endif(ANDROID_NDK)
-# NUFFT
-option(USE_OPTIMIZED_FFT "Whether or not to use an optimized fft library instead of included netlib fftpack" OFF)
-
-# Check the usage of the user provided BLAS libraries
-if(FFT_LIBRARIES)
-  include(CheckFortranFunctionExists)
-  set(CMAKE_REQUIRED_LIBRARIES ${FFT_LIBRARIES})
-  CHECK_FORTRAN_FUNCTION_EXISTS("dgemm" FFT_FOUND)
-  unset( CMAKE_REQUIRED_LIBRARIES )
-  if(FFT_FOUND)
-    message(STATUS "--> BLAS supplied by user is WORKING, will use ${FFT_LIBRARIES}.")
-  else(FFT_FOUND)
-    message(ERROR "--> BLAS supplied by user is not WORKING, CANNOT USE ${FFT_LIBRARIES}.")
-    message(ERROR "-->     Will use REFERENCE BLAS (by default)")
-    message(ERROR "-->     Or Correct your FFT_LIBRARIES entry ")
-    message(ERROR "-->     Or Consider checking USE_OPTIMIZED_FFT")
-  endif(FFT_FOUND)
-
-# User did not provide a BLAS Library but specified to search for one
-elseif( USE_OPTIMIZED_FFT )
-  find_package( FFT
-  PATHS ../ffte)
-endif (FFT_LIBRARIES)
-
-# Neither user specified or optimized BLAS libraries can be used
-if(NOT FFT_FOUND)
-  message(STATUS "Using supplied NETLIB fftpack implementation")
-  add_subdirectory(src/fftpack)
-  set( FFT_LIBRARIES fftbase )
-else()
-  set( CMAKE_EXE_LINKER_FLAGS
-    "${CMAKE_EXE_LINKER_FLAGS} ${BLAS_LINKER_FLAGS}"
-    CACHE STRING "Linker flags for executables" FORCE)
-  set( CMAKE_MODULE_LINKER_FLAGS
-    "${CMAKE_MODULE_LINKER_FLAGS} ${BLAS_LINKER_FLAGS}"
-    CACHE STRING "Linker flags for modules" FORCE)
-  set( CMAKE_SHARED_LINKER_FLAGS
-    "${CMAKE_SHARED_LINKER_FLAGS} ${BLAS_LINKER_FLAGS}"
-    CACHE STRING "Linker flags for shared libs" FORCE)
-endif( NOT FFT_FOUND )
 
 # --------------------------------------------------
 # CNUFFT

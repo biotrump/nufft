@@ -5,6 +5,7 @@ cc This software is being released under a FreeBSD license
 cc (see license.txt in this directory).
 c
       program testfft
+C      USE NUFFTModule
       implicit none
 c
 c --- local variables
@@ -34,6 +35,9 @@ c     --------------------------------------------------
 c     start tests
 c     --------------------------------------------------
 c
+
+		call nufft_ffte(1)
+
       iflag = 1
       print*,' Start 1D testing: ', ' nj =',nj, ' ms =',ms
       do i = 1,5

@@ -130,35 +130,47 @@ message("CMAKE_THREAD_LIBS_INIT : ${CMAKE_THREAD_LIBS_INIT}")
 add_executable(nufft1d_demof90-ffte nufft1d_demof90-ffte.f)
 target_link_libraries(nufft1d_demof90-ffte
 	nufft
-	${FFTELIB} )
+	${FFTELIB}
+	fftbase
+	${FFTSLIB})
 
 add_executable(nufft1d_demof90f-ffte nufft1d_demof90f-ffte.f)
 target_link_libraries(nufft1d_demof90f-ffte
 	nufft
-	${FFTELIB} )
+	${FFTELIB}
+	fftbase
+	${FFTSLIB})
 
 include_directories("${NUFFT_SOURCE_DIR}/src")
 
 add_executable(nufft1df_ffte nufft1df_ffte.c)
 target_link_libraries(nufft1df_ffte
 	nufft
-	${FFTELIB} )
+	${FFTELIB}
+	fftbase
+	${FFTSLIB})
 
 add_executable(nufft1df-hr nufft1df-hr.c)
 target_link_libraries(nufft1df-hr
 	nufft
-	${FFTELIB} )
+	${FFTELIB}
+	fftbase
+	${FFTSLIB})
 
 add_executable(r110_m156bpm r110_m156bpm.c)
 target_link_libraries(r110_m156bpm
 	nufft
-	${FFTELIB} )
+	${FFTELIB}
+	fftbase
+	${FFTSLIB})
 
 add_executable(reentrant-pthread-test reentrant-pthread-test.c)
 target_link_libraries(reentrant-pthread-test
 	nufft
 	${FFTELIB}
 	${CMAKE_THREAD_LIBS_INIT}
+	fftbase
+	${FFTSLIB}
 	)
 
 add_executable(nufft_verify nufft_verify.c)
@@ -166,4 +178,6 @@ target_link_libraries(nufft_verify
 	nufft
 	${FFTELIB}
 	${CMAKE_THREAD_LIBS_INIT}
+	fftbase
+	${FFTSLIB}
 	)
